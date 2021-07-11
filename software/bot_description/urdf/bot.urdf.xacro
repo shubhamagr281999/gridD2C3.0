@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot name="bot" xmlns:xacro="http://ros.org/wiki/xacro">
+	<!-- <xacro:include filename="$(find bot_description)/urdf/" /> -->
+	<xacro:property name="wheel_dia" value="0.085"/>
+	<xacro:property name="bot_height" value="0.115"/>
+	<xacro:property name="length" value="0.12"/>
+	<xacro:property name="breadth" value="0.12"/>
+	<link name="base_link">
+		<collision>
+			<origin xyz="0 0 ${bot_height}" rpy="0 0 0"/>
+			<geometry>
+				<box size="${length} ${breadth} 0.008"/>
+			</geometry>
+		</collision>
+		<visual>
+			<origin xyz="0 0 ${bot_height}" rpy="0 0 0"/>
+			<geometry>
+				<box size="${length} ${breadth} 0.008"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="left_wheel">
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<cylinder radius="${wheel_dia/2}" length="0.008"/>
+			</geometry>
+		</collision>
+		<visual>
+			<origin xyz="${length/2} -0.4 -0.35" rpy="0 0 0"/>
+			<geometry>
+				<cylinder radius="${wheel_dia/2}" length="0.008"/>
+			</geometry>
+		</visual>
+	</link>
+	${length/2} -0.4 -0.35
+
+</robot>

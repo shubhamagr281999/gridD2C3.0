@@ -1,0 +1,38 @@
+<launch>
+    <arg name="robot_name"         default="bot"/>
+    <arg name="use_sim_time"       default="true"/>
+    <arg name="gui"                default="true"/>
+    <arg name="headless"           default="false"/>
+    <arg name="paused"             default="false"/>
+    <arg name="lite"               default="false"/>
+    <!-- <arg name="ros_control_file"   default="$(find champ_gazebo)/config/ros_control.yaml" /> -->
+    <arg name="gazebo_world"       default="$(find champ_gazebo)/worlds/incline.world" />
+    <arg name="world_init_x"       default="0.0" />
+    <arg name="world_init_y"       default="0.0" />
+    <arg name="world_init_heading" default="0.0" />
+    <!-- <arg name="description_name"           default="robot_description"/> -->
+    <arg name="description_file"           default="$(find bot_description)/urdf/bot.urdf"/>
+
+    <!-- this should be only called once on multi-robot simulation -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <!-- <arg name="world_name" value="$(arg gazebo_world)"/> -->
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="headless" value="$(arg headless)"/>
+    </include>
+
+    <group ns="$(arg robot_name)">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param robot_descriptions -model $(arg robot_name) -robot_namespace $(arg robot_name) 
+        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.0 -Y $(arg world_init_heading)" />
+
+       <!--  <rosparam file="$(arg ros_control_file)" command="load"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
+            joint_states_controller
+            joint_group_position_controller
+            ">
+        </node> -->
+    </group>
+</launch>
+
