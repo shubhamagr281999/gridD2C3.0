@@ -5,34 +5,124 @@
 	<xacro:property name="bot_height" value="0.115"/>
 	<xacro:property name="length" value="0.12"/>
 	<xacro:property name="breadth" value="0.12"/>
-	<link name="base_link">
+	<xacro:property name="pi" value="3.14159"/>
+	<xacro:property name="m_base" value="1"/>
+	<xacro:property name="m_wheel" value="0.3"/>
+	<xacro:property name="m_caster_wheel" value="3"/>
+
+	<link name="base_link"/>
+	<link name="base_link_inertia">
+		<inertial>
+     		<origin xyz="0 0 0" rpy="0 0 0"/>
+     		<mass value="${m_base}"/>
+     		<inertia ixx="${m_base*(breadth*breadth+0.008*0.008)/12.0}"  ixy="0"  ixz="0" iyy="${m_base*(length*length+0.008*0.008)/12.0}" iyz="0" izz="${m_base*(breadth*breadth+length*length)/12.0}" />
+   		</inertial>
 		<collision>
-			<origin xyz="0 0 ${bot_height}" rpy="0 0 0"/>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
 				<box size="${length} ${breadth} 0.008"/>
 			</geometry>
 		</collision>
 		<visual>
-			<origin xyz="0 0 ${bot_height}" rpy="0 0 0"/>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
 				<box size="${length} ${breadth} 0.008"/>
 			</geometry>
 		</visual>
 	</link>
 	<link name="left_wheel">
+		<inertial>
+     		<origin xyz="0 0 0" rpy="0 0 0"/>
+     		<mass value="${m_wheel}"/>
+     		<inertia ixx="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}"  ixy="0"  ixz="0" iyy="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}" iyz="0" izz="${m_wheel*(wheel_dia*wheel_dia/4)/2.0}" />
+   		</inertial>		
 		<collision>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
-				<cylinder radius="${wheel_dia/2}" length="0.008"/>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
 			</geometry>
 		</collision>
 		<visual>
-			<origin xyz="${length/2} -0.4 -0.35" rpy="0 0 0"/>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
-				<cylinder radius="${wheel_dia/2}" length="0.008"/>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
 			</geometry>
 		</visual>
 	</link>
-	${length/2} -0.4 -0.35
-
+	<link name="right_wheel">
+		<inertial>
+     		<origin xyz="0 0 0" rpy="0 0 0"/>
+     		<mass value="${m_wheel}"/>
+     		<inertia ixx="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}"  ixy="0"  ixz="0" iyy="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}" iyz="0" izz="${m_wheel*(wheel_dia*wheel_dia/4)/2.0}" />
+   		</inertial>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
+			</geometry>
+		</collision>
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="caster_wheel">
+		<inertial>
+     		<origin xyz="0 0 0" rpy="0 0 0"/>
+     		<mass value="${m_caster_wheel}"/>
+     		<inertia ixx="${m_caster_wheel*(2*wheel_dia*wheel_dia/9.0)/5.0}"  ixy="0"  ixz="0" iyy="${m_caster_wheel*(2*wheel_dia*wheel_dia/9.0)/5.0}" iyz="0" izz="${m_caster_wheel*(2*wheel_dia*wheel_dia/9.0)/5.0}" />
+   		</inertial>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="${wheel_dia/3.0}"/>
+			</geometry>
+		</collision>
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="${wheel_dia/3.0}"/>
+			</geometry>
+		</visual>
+	</link>
+	<joint name="base_link_inertia_joint" type="fixed">
+		<parent link="base_link"/>
+		<child link="base_link_inertia"/>
+		<origin rpy="0 0 0" xyz="0 0 0"/>
+	</joint>
+	<joint name="left_wheel_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="left_wheel"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.04 ${breadth/2+0.008}  -0.035"/>
+		<axis rpy="0 0 0" xyz="0 0 1"/>
+	</joint>	
+	<joint name="right_wheel_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="right_wheel"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.04 ${-breadth/2-0.008}  -0.035"/>
+		<axis rpy="0 0 0" xyz="0 0 1"/>
+	</joint>
+	<joint name="caster_wheel_joint" type="continuous">
+		<parent link="base_link"/>
+		<child link="caster_wheel"/>
+		<origin rpy="0 0 0" xyz="${length/2-0.02} 0 ${-0.035- wheel_dia/6}"/>
+		<axis rpy="0 0 0" xyz="0 1 0"/>
+	</joint>
+	<gazebo>
+    <plugin filename="libgazebo_ros_diff_drive.so" name="differential_drive_controller">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>20</updateRate>
+      <leftJoint>left_wheel_joint</leftJoint>
+      <rightJoint>right_wheel_joint</rightJoint>
+      <wheelSeparation>${breadth+0.016}</wheelSeparation>
+      <wheelDiameter>${wheel_dia}</wheelDiameter>
+      <torque>0.1</torque>
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_link</robotBaseFrame>
+    </plugin>
+  </gazebo>
 </robot>

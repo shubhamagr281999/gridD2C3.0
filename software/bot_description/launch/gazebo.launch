@@ -24,8 +24,20 @@
 
     <group ns="$(arg robot_name)">
         <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
-        -param robot_descriptions -model $(arg robot_name) -robot_namespace $(arg robot_name) 
-        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.0 -Y $(arg world_init_heading)" />
+        -param /robot_description -model $(arg robot_name) -robot_namespace $(arg robot_name) 
+        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.12 -Y $(arg world_init_heading)" />
+
+       <!--  <rosparam file="$(arg ros_control_file)" command="load"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
+            joint_states_controller
+            joint_group_position_controller
+            ">
+        </node> -->
+    </group>
+    <group ns="bot2">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description -model bot2 -robot_namespace bot2 
+        -x 0.6 -y 0.6 -z 0.12 -Y $(arg world_init_heading)" />
 
        <!--  <rosparam file="$(arg ros_control_file)" command="load"/>
         <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
