@@ -1,0 +1,35 @@
+<group ns="2">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description2 -model 2 -robot_namespace 2 
+        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.12 -Y $(arg world_init_heading)" />
+       <!--  <rosparam file="$(arg ros_control_file)" command="load"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
+            joint_states_controller
+            joint_group_position_controller
+            ">
+        </node> -->
+    </group>
+
+    <group ns="3">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description3 -model 3 -robot_namespace 3 
+        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.12 -Y $(arg world_init_heading)" />
+       <!--  <rosparam file="$(arg ros_control_file)" command="load"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
+            joint_states_controller
+            joint_group_position_controller
+            ">
+        </node> -->
+    </group>
+
+    <group ns="4">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description4 -model 4 -robot_namespace 4 
+        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.12 -Y $(arg world_init_heading)" />
+       <!--  <rosparam file="$(arg ros_control_file)" command="load"/>
+        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
+            joint_states_controller
+            joint_group_position_controller
+            ">
+        </node> -->
+    </group>

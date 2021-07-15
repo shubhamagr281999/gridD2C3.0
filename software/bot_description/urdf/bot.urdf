@@ -20,7 +20,7 @@
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <box size="0.12 0.12 0.008"/>
+        <mesh filename="package://bot_description/meshes/bot1.dae"/>
       </geometry>
     </visual>
   </link>

@@ -1,16 +1,66 @@
 <launch>
-    <param name="robot_description" command="cat '$(find bot_description)/urdf/bot.urdf' " />
-    <node name="bot_robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+    <param name="robot_description1" command="cat '$(find bot_description)/urdf/bot1.urdf' " />
+    <node name="bot_robot_state_publisher1" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
         <param name="publish_frequency" type="double" value="30.0" />
         <param name="ignore_timestamp" type="bool" value="true" />
-        <!-- <remap from="robot_description" to="robot_description"/> -->
+        <remap from="robot_description" to="robot_description1"/>
     </node>
-
-    <!-- <node type="rviz" name="rviz" pkg="rviz" /> -->
-
-    <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+    <node name="joint_state_publisher1" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="/use_gui" value="false"/>
-    <!-- <remap from="robot_description" to="robot_description1"/> -->
+    <remap from="robot_description" to="robot_description1"/>
     </node>
+
+    <!-- bot 2  -->
+    <param name="robot_description2" command="cat '$(find bot_description)/urdf/bot2.urdf' " />
+    <node name="bot_robot_state_publisher2" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="robot_description2"/>
+    </node>
+    <node name="joint_state_publisher2" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="robot_description2"/>
+    </node>
+
+    <!-- bot 3 -->
+    <param name="robot_description3" command="cat '$(find bot_description)/urdf/bot3.urdf' " />
+    <node name="bot_robot_state_publisher3" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="robot_description3"/>
+    </node>
+
+    <node name="joint_state_publisher3" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="robot_description3"/>
+    </node>
+
+    <!-- bot 4 -->
+    <param name="robot_description4" command="cat '$(find bot_description)/urdf/bot4.urdf' " />
+    <node name="bot_robot_state_publisher4" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="robot_description4"/>
+    </node>
+
+    <node name="joint_state_publisher4" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="robot_description4"/>
+    </node>
+
+    <!-- arena -->
+    <param name="arena_description" command="cat '$(find bot_description)/urdf/arena.urdf' " />
+    <node name="arena_description_pub" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="arena_description"/>
+    </node>
+
+<!--     <node name="joint_arena_pub" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="arena_description"/>
+    </node>
+ -->
+
 </launch>
 
