@@ -1,44 +1,50 @@
 <launch>
-    <arg name="robot_name"         default="bot"/>
     <arg name="use_sim_time"       default="true"/>
     <arg name="gui"                default="true"/>
     <arg name="headless"           default="false"/>
-    <arg name="paused"             default="true"/>
+    <arg name="paused"             default="false"/>
     <arg name="lite"               default="false"/>
     <!-- <arg name="ros_control_file"   default="$(find champ_gazebo)/config/ros_control.yaml" /> -->
-    <arg name="gazebo_world"       default="$(find bot_description)/world/arena_worldI.world" />
-    <arg name="world_init_x"       default="0.0" />
-    <arg name="world_init_y"       default="0.0" />
-    <arg name="world_init_heading" default="0.0" />
-    <!-- <arg name="description_name"           default="robot_description"/> -->
-    <arg name="description_file"           default="$(find bot_description)/urdf/bot1.urdf"/>
+    <arg name="world_init_heading" default="3.14" />
 
     <!-- this should be only called once on multi-robot simulation -->
     <include file="$(find gazebo_ros)/launch/empty_world.launch">
-        <!-- <arg name="world_name" value="$(arg gazebo_world)"/> -->
         <arg name="gui" value="$(arg gui)" />
         <arg name="paused" value="$(arg paused)"/>
         <arg name="use_sim_time" value="true"/>
         <arg name="headless" value="$(arg headless)"/>
     </include>
-<!--     <group ns="arena">
+
+    <!-- loading the bots and arena -->
+    <group ns="arena">
         <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
         -param /arena_description -model arena -robot_namespace arena 
-        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.1 -Y $(arg world_init_heading)" />
-    </group> -->
+        -x 0 -y 0 -z 0" />
+    </group>
 
     <group ns="bot1">
         <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
         -param /robot_description1 -model bot1 -robot_namespace bot1 
-        -x $(arg world_init_x) -y $(arg world_init_y) -z 0.3 -Y $(arg world_init_heading)" />
-       <!--  <rosparam file="$(arg ros_control_file)" command="load"/>
-        <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" args="
-            joint_states_controller
-            joint_group_position_controller
-            ">
-        </node> -->
+        -x 0.6858 -y 0.2286 -z 0.12 -Y $(arg world_init_heading)" />
     </group>
 
+    <group ns="bot2">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description2 -model bot2 -robot_namespace bot2 
+        -x 0.6858 -y 0.0762 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
+
+    <group ns="bot3">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description3 -model bot3 -robot_namespace bot3 
+        -x 0.6858 -y -0.0762 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
+
+    <group ns="bot4">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description4 -model bot4 -robot_namespace bot4 
+        -x 0.6858 -y -0.2286 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
     
 </launch>
 

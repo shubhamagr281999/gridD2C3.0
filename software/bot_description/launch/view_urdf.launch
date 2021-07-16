@@ -56,11 +56,5 @@
         <remap from="robot_description" to="arena_description"/>
     </node>
 
-<!--     <node name="joint_arena_pub" pkg="joint_state_publisher" type="joint_state_publisher">
-    <param name="/use_gui" value="false"/>
-    <remap from="robot_description" to="arena_description"/>
-    </node>
- -->
-
 </launch>
 
