@@ -13,7 +13,11 @@ from sensor_msgs.msg import JointState , LaserScan
 from tf2_msgs.msg import TFMessage
 import matplotlib.pyplot as plt
 
-class bot:    
+class position
+    def __init__(self,X,Y):
+        self.x=X
+        self.y=Y
+class bot: 
     def __init__(self,point,parent):
         self.position=np.array(point,dtype=float)
         self.parent_node=parent
