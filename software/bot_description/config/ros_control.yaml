@@ -1,13 +1,3 @@
-"":
-  joint_states_controller:
-    type: joint_state_controller/JointStateController
-    publish_rate: 200
-
-  joint_group_position_controller:
-    type: effort_controllers/JointVelocityController
-    joints:
-      - bot1_left_wheel_joint
-      - bot1_right_wheel_joint
-    gains:
-      bot1_left_wheel_joint       : {p: 1, d: 0.9, i: 0.1}
-      bot1_right_wheel_joint      : {p: 1, d: 0.9, i: 0.1}
+type: "position_controllers/JointGroupPositionController"
+joints:
+ - bot1_left_wheel_joint

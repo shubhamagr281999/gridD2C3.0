@@ -89,13 +89,13 @@
   <joint name="left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="left_wheel"/>
-    <origin rpy="0 1.570795 1.570795" xyz="-0.02 0.048  -0.015"/>
+    <origin rpy="0 1.570795 1.570795" xyz="-0.02 0.058  -0.015"/>
     <axis rpy="0 0 0" xyz="0 0 1"/>
   </joint>
   <joint name="right_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="right_wheel"/>
-    <origin rpy="0 1.570795 1.570795" xyz="-0.02 -0.048  -0.015"/>
+    <origin rpy="0 1.570795 1.570795" xyz="-0.02 -0.058  -0.015"/>
     <axis rpy="0 0 0" xyz="0 0 1"/>
   </joint>
   <joint name="caster_wheel_joint" type="continuous">
@@ -110,7 +110,7 @@
       <updateRate>20</updateRate>
       <leftJoint>left_wheel_joint</leftJoint>
       <rightJoint>right_wheel_joint</rightJoint>
-      <wheelSeparation>0.096</wheelSeparation>
+      <wheelSeparation>0.116</wheelSeparation>
       <wheelDiameter>0.05</wheelDiameter>
       <torque>0.001</torque>
       <commandTopic>cmd_vel</commandTopic>

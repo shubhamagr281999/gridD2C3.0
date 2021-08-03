@@ -1,0 +1,3 @@
+<launch>	
+	<node pkg="bot_perception" type="test.py" name="assigner" output="screen"/>
+</launch>
