@@ -18,9 +18,9 @@
       </geometry>
     </collision>
     <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <origin rpy="0 0 0" xyz="0 0 0.02"/>
       <geometry>
-        <mesh filename="package://bot_description/meshes/bot1.dae"/>
+        <mesh filename="package://bot_description/meshes/bot1.dae" scale="1.22 1.22 1.22"/>
       </geometry>
     </visual>
   </link>
@@ -81,21 +81,22 @@
       </geometry>
     </visual>
   </link>
+  <!-- joints def -->
   <joint name="base_link_inertia_joint" type="fixed">
     <parent link="base_link"/>
     <child link="base_link_inertia"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
-  <joint name="left_wheel_joint" type="continuous">
+  <joint name="bot1_left_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="left_wheel"/>
-    <origin rpy="0 1.570795 1.570795" xyz="-0.02 0.058  -0.015"/>
+    <origin rpy="0 1.570795 1.570795" xyz="-0.02 0.048  -0.015"/>
     <axis rpy="0 0 0" xyz="0 0 1"/>
   </joint>
-  <joint name="right_wheel_joint" type="continuous">
+  <joint name="bot1_right_wheel_joint" type="continuous">
     <parent link="base_link"/>
     <child link="right_wheel"/>
-    <origin rpy="0 1.570795 1.570795" xyz="-0.02 -0.058  -0.015"/>
+    <origin rpy="0 1.570795 1.570795" xyz="-0.02 -0.048  -0.015"/>
     <axis rpy="0 0 0" xyz="0 0 1"/>
   </joint>
   <joint name="caster_wheel_joint" type="continuous">
@@ -104,19 +105,31 @@
     <origin rpy="0 0 0" xyz="0.02 0 -0.0233333333333"/>
     <axis rpy="0 0 0" xyz="0 1 0"/>
   </joint>
+  <!-- controls plugin for vlecoty based control -->
   <gazebo>
-    <plugin filename="libgazebo_ros_diff_drive.so" name="differential_drive_controller">
-      <alwaysOn>true</alwaysOn>
-      <updateRate>20</updateRate>
-      <leftJoint>left_wheel_joint</leftJoint>
-      <rightJoint>right_wheel_joint</rightJoint>
-      <wheelSeparation>0.116</wheelSeparation>
-      <wheelDiameter>0.05</wheelDiameter>
-      <torque>0.001</torque>
-      <commandTopic>cmd_vel</commandTopic>
-      <odometryTopic>odom</odometryTopic>
-      <odometryFrame>odom</odometryFrame>
-      <robotBaseFrame>base_link</robotBaseFrame>
+    <plugin filename="libgazebo_ros_control.so" name="gazebo_ros_control">
+      <legacyModeNS>true</legacyModeNS>
+      <robotNamespace>/bot1</robotNamespace>
     </plugin>
   </gazebo>
+  <transmission name="bot1_left_wheel_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="bot1_left_wheel_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="bot1_left_wheel_joint_motor">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
+  <transmission name="bot1_right_wheel_trans">
+    <type>transmission_interface/SimpleTransmission</type>
+    <joint name="bot1_right_wheel_joint">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+    </joint>
+    <actuator name="bot1_right_wheel_joint_motor">
+      <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
+      <mechanicalReduction>1</mechanicalReduction>
+    </actuator>
+  </transmission>
 </robot>

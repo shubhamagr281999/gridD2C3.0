@@ -16,10 +16,10 @@ class pose_publisher:
         self.bot3_pose=Pose2D()
         self.bot4_pose=Pose2D()
         self.factor=0.0019704433497537
-        self.pub_bot1_pose=rospy.Publisher('/bot1_pose',Pose2D,queue_size=10)
-        self.pub_bot2_pose=rospy.Publisher('/bot2_pose',Pose2D,queue_size=10)
-        self.pub_bot3_pose=rospy.Publisher('/bot3_pose',Pose2D,queue_size=10)
-        self.pub_bot4_pose=rospy.Publisher('/bot4_pose',Pose2D,queue_size=10)
+        self.pub_bot1_pose=rospy.Publisher('/bot1_pose',Pose2D,queue_size=1)
+        self.pub_bot2_pose=rospy.Publisher('/bot2_pose',Pose2D,queue_size=1)
+        self.pub_bot3_pose=rospy.Publisher('/bot3_pose',Pose2D,queue_size=1)
+        self.pub_bot4_pose=rospy.Publisher('/bot4_pose',Pose2D,queue_size=1)
         self.camera_sub=rospy.Subscriber("/arena/arena1/camera1/image_raw", Image, self.callback_opencv)
 
     def angle(self,y,x):
@@ -54,7 +54,7 @@ class pose_publisher:
             self.current_pose[0][1]=-(cX-img.shape[1]/2.0)*self.factor
             self.current_pose[0][0]=-(cY-img.shape[0]/2.0)*self.factor
             self.current_pose[0][2]=self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1]))
-            
+            print(self.current_pose[0][0],self.current_pose[0][1],self.current_pose[0][2])
 
         a=np.where(ids==20)
         if a[0].size==1:
