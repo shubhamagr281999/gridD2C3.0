@@ -15,7 +15,7 @@ class pose_publisher:
         self.bot2_pose=Pose2D()
         self.bot3_pose=Pose2D()
         self.bot4_pose=Pose2D()
-        self.factor=0.0019704433497537
+        self.factor=0.00269541
         self.pub_bot1_pose=rospy.Publisher('/bot1_pose',Pose2D,queue_size=10)
         self.pub_bot2_pose=rospy.Publisher('/bot2_pose',Pose2D,queue_size=10)
         self.pub_bot3_pose=rospy.Publisher('/bot3_pose',Pose2D,queue_size=10)
