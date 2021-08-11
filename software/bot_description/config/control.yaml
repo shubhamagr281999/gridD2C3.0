@@ -1,0 +1,38 @@
+simple_model:
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+ 
+  base_to_left_joint_position_controller1:
+    type: velocity_controllers/JointVelocityController
+    joint: bot1_left_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}
+  base_to_left_joint_position_controller2:
+    type: velocity_controllers/JointVelocityController
+    joint: bot2_left_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}
+  base_to_left_joint_position_controller3:
+    type: velocity_controllers/JointVelocityController
+    joint: bot3_left_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}
+  base_to_left_joint_position_controller4:
+    type: velocity_controllers/JointVelocityController
+    joint: bot4_left_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}
+
+  base_to_right_joint_position_controller1:
+    type: velocity_controllers/JointVelocityController
+    joint: bot1_right_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}
+  base_to_right_joint_position_controller2:
+    type: velocity_controllers/JointVelocityController
+    joint: bot2_right_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}
+  base_to_right_joint_position_controller3:
+    type: velocity_controllers/JointVelocityController
+    joint: bot3_right_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}
+  base_to_right_joint_position_controller4:
+    type: velocity_controllers/JointVelocityController
+    joint: bot4_right_wheel_joint
+    pid: {p: 1.0, i: 0.0, d: 1.0}

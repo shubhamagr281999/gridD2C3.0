@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<robot name="bot1" xmlns:xacro="http://ros.org/wiki/xacro">
+<robot name="bot4" xmlns:xacro="http://ros.org/wiki/xacro">
 	<xacro:property name="wheel_dia" value="0.05"/>
 	<xacro:property name="bot_height" value="0.07"/>
 	<xacro:property name="length" value="0.08"/>
@@ -7,7 +7,8 @@
 	<xacro:property name="pi" value="3.14159"/>
 	<xacro:property name="m_base" value="1"/>
 	<xacro:property name="m_wheel" value="0.3"/>
-	<xacro:property name="m_caster_wheel" value="3"/>
+	<xacro:property name="m_aruco" value="0.1"/>
+	<xacro:property name="m_caster_wheel" value="4"/>
   <xacro:property name="bot_number" value="1"/>
 
 
@@ -27,7 +28,26 @@
 		<visual>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
-				<mesh filename="package://bot_description/meshes/bot${bot_number}.dae"  />
+				<box size="${length} ${breadth} 0.008"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="aruco">
+		<inertial>
+     		<origin xyz="0 0 0" rpy="0 0 0"/>
+     		<mass value="${m_aruco}"/>
+     		<inertia ixx="${m_aruco*(breadth*breadth+0.008*0.008)/12.0}"  ixy="0"  ixz="0" iyy="${m_aruco*(length*length+0.008*0.008)/12.0}" iyz="0" izz="${m_aruco*(breadth*breadth+length*length)/12.0}" />
+   		</inertial>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				 <mesh filename="package://bot_description/meshes/bot${bot_number}.dae" scale="1.25 1.25 1.25"/>
+			</geometry>
+		</collision>
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				 <mesh filename="package://bot_description/meshes/bot${bot_number}.dae" scale="1.25 1.25 1.25"/>
 			</geometry>
 		</visual>
 	</link>
@@ -95,6 +115,11 @@
 		<parent link="base_link"/>
 		<child link="base_link_inertia"/>
 		<origin rpy="0 0 0" xyz="0 0 0"/>
+	</joint>
+	<joint name="aruco_joint" type="fixed">
+		<parent link="base_link"/>
+		<child link="aruco"/>
+		<origin rpy="0 0 0" xyz="0 0 0.05"/>
 	</joint>
 	<joint name="bot${bot_number}_left_wheel_joint" type="continuous">
 		<parent link="base_link"/>
