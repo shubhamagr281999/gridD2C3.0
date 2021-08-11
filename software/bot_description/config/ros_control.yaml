@@ -1,3 +1,0 @@
-type: "position_controllers/JointGroupPositionController"
-joints:
- - bot1_left_wheel_joint

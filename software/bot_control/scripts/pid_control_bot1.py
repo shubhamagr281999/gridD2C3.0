@@ -63,7 +63,7 @@ class PID:
         self.goal_pose_x=msg.x
         self.goal_pose_y=msg.y
         self.goal_pose_yaw=msg.theta
-        # self.PID()
+        self.PID()
 
     def twist_msg(self, v_x_output, w_output):
         msg_pub = Twist()

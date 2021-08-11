@@ -54,7 +54,7 @@ class pose_publisher:
             self.current_pose[0][1]=-(cX-img.shape[1]/2.0)*self.factor
             self.current_pose[0][0]=-(cY-img.shape[0]/2.0)*self.factor
             self.current_pose[0][2]=self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1]))
-            
+            print(self.current_pose[0][0],self.current_pose[0][1],self.current_pose[0][2])
 
         a=np.where(ids==20)
         if a[0].size==1:

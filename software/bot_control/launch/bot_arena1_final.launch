@@ -1,0 +1,114 @@
+<launch>
+    <arg name="use_sim_time"       default="true"/>
+    <arg name="gui"                default="true"/>
+    <arg name="headless"           default="false"/>
+    <arg name="paused"             default="false"/>
+    <arg name="lite"               default="false"/>
+    <arg name="world_init_heading" default="3.14" />
+
+<!-- loading robot description-->
+<!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+    <!-- bot1 -->
+    <param name="robot_description1" command="cat '$(find bot_description)/urdf/bot1.urdf' " />
+    <node name="bot_robot_state_publisher1" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="robot_description1"/>
+    </node>
+    <node name="joint_state_publisher1" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="robot_description1"/>
+    </node>
+    <!-- bot 2  -->
+    <param name="robot_description2" command="cat '$(find bot_description)/urdf/bot2.urdf' " />
+    <node name="bot_robot_state_publisher2" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="robot_description2"/>
+    </node>
+    <node name="joint_state_publisher2" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="robot_description2"/>
+    </node>
+    <!-- bot 3 -->
+    <param name="robot_description3" command="cat '$(find bot_description)/urdf/bot3.urdf' " />
+    <node name="bot_robot_state_publisher3" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="robot_description3"/>
+    </node>
+    <node name="joint_state_publisher3" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="robot_description3"/>
+    </node>
+    <!-- bot 4 -->
+    <param name="robot_description4" command="cat '$(find bot_description)/urdf/bot4.urdf' " />
+    <node name="bot_robot_state_publisher4" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="robot_description4"/>
+    </node>
+    <node name="joint_state_publisher4" pkg="joint_state_publisher" type="joint_state_publisher">
+    <param name="/use_gui" value="false"/>
+    <remap from="robot_description" to="robot_description4"/>
+    </node>
+    <!-- arena -->
+    <param name="arena_description" command="cat '$(find bot_description)/urdf/arena.urdf' " />
+    <node name="arena_description_pub" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false">
+        <param name="publish_frequency" type="double" value="30.0" />
+        <param name="ignore_timestamp" type="bool" value="true" />
+        <remap from="robot_description" to="arena_description"/>
+    </node>
+
+<!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
+<!-- loading gazebo world -->
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="gui" value="$(arg gui)" />
+        <arg name="paused" value="$(arg paused)"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="headless" value="$(arg headless)"/>
+    </include>
+<!-- bot spawn -->
+    <group ns="arena">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /arena_description -model arena -robot_namespace arena 
+        -x 0 -y 0 -z 0" />
+    </group>
+
+    <group ns="bot1">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description1 -model bot1 -robot_namespace bot1 
+        -x 0.6858 -y 0.2286 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
+
+    <group ns="bot2">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description2 -model bot2 -robot_namespace bot2 
+        -x 0.6858 -y 0.0762 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
+
+    <group ns="bot3">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description3 -model bot3 -robot_namespace bot3 
+        -x 0.6858 -y -0.0762 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
+
+    <group ns="bot4">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description4 -model bot4 -robot_namespace bot4 
+        -x 0.6858 -y -0.2286 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
+<!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
+
+<!-- loading pose estimator/odom -->
+<node pkg="bot_control" type="estimator.py" name="pose_estimator" output="screen"/>
+
+<!-- controller node -->
+<!-- <node pkg="bot_control" type="pid_control_bot1.py" name="controller_node_bot1" output="screen"/>
+<node pkg="bot_control" type="pid_control_bot2.py" name="controller_node_bot2" output="screen"/>
+<node pkg="bot_control" type="pid_control_bot3.py" name="controller_node_bot3" output="screen"/>
+<node pkg="bot_control" type="pid_control_bot4.py" name="controller_node_bot4" output="screen"/> -->
+    
+</launch>
+
