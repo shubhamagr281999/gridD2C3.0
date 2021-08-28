@@ -13,16 +13,16 @@ class PID:
     def __init__(self):
         # defining tunable params
         self.kp_lin = 1
-        self.ki_lin = 0.01
-        self.kd_lin = 0.5
+        self.ki_lin = 0.0
+        self.kd_lin = 0.0
 
         self.kp_angle = 1
-        self.ki_angle = 0.03
-        self.kd_angle = 0.05
+        self.ki_angle = 0.0
+        self.kd_angle = 0.0
 
         self.kp_angle_soft = 0.5
         self.ki_angle_soft = 0.0
-        self.kd_angle_soft = 0.01
+        self.kd_angle_soft = 0.0
 
         self.max_vel_lin=3.0
         self.max_vel_ang=1
