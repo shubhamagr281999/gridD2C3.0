@@ -53,8 +53,6 @@ class pose_publisher:
     def callback_opencv(self):
         while not rospy.is_shutdown():
             ret, img = self.vid.read()
-            cv2.imshow('frame', img)
-            cv2.waitKey(1)
             arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_7X7_50)
             arucoParams = cv2.aruco.DetectorParameters_create()
             (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
@@ -62,8 +60,8 @@ class pose_publisher:
             #now starting to localise bot wrt to the ids
             a=np.where(ids==10)
             if a[0].size==1:
-                print('mila mila')
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
+                img=cv2.rectangle(img,(topLeft[0],topLeft[1]),(bottomRight[0],bottomRight[1]),(0,255,0),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
@@ -71,11 +69,11 @@ class pose_publisher:
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 self.change_pose(0,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
-
+                
             a=np.where(ids==20)
             if a[0].size==1:
-                print('mila mila')
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
+                img=cv2.rectangle(img,(topLeft[0],topLeft[1]),(bottomRight[0],bottomRight[1]),(0,255,255),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
@@ -83,12 +81,11 @@ class pose_publisher:
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)        
                 self.change_pose(1,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
-
-
+                
             a=np.where(ids==30)
             if a[0].size==1:
-                print('mila mila')
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
+                img=cv2.rectangle(img,topLeft,bottomRight,(255,255,0),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
@@ -96,12 +93,11 @@ class pose_publisher:
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)     
                 self.change_pose(2,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
-
                 
             a=np.where(ids==40)
             if a[0].size==1:
-                print('mila mila')
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
+                img=cv2.rectangle(img,topLeft,bottomRight,(0,0,255),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
@@ -109,7 +105,10 @@ class pose_publisher:
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)     
                 self.change_pose(3,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                
 
+            cv2.imshow('frame', img)
+            cv2.waitKey(1)
             self.bot1_pose.x=self.current_pose[0][0]
             self.bot1_pose.y=self.current_pose[0][1]
             self.bot1_pose.theta=self.current_pose[0][2] 
