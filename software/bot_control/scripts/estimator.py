@@ -22,7 +22,7 @@ class pose_publisher:
         self.pub_bot2_pose=rospy.Publisher('/bot2_pose',Pose2D,queue_size=1)
         self.pub_bot3_pose=rospy.Publisher('/bot3_pose',Pose2D,queue_size=1)
         self.pub_bot4_pose=rospy.Publisher('/bot4_pose',Pose2D,queue_size=1)
-        self.vid = cv2.VideoCapture(0)
+        self.vid = cv2.VideoCapture(2)
         # self.camera_sub=rospy.Subscriber("/arena/arena1/camera1/image_raw", Image, self.callback_opencv)
     def angle_bound(self,a):
         if(a<-pi):
@@ -38,6 +38,7 @@ class pose_publisher:
             self.current_pose[bot][0]=x
         if(yaw!=0):
             self.current_pose[bot][2]=yaw
+        print('yaw',yaw,'bot:',bot)
 
     def angle(self,y,x):
         x=x+0.000001
