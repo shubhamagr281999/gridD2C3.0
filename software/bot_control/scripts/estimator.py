@@ -38,7 +38,7 @@ class pose_publisher:
             self.current_pose[bot][0]=x
         if(yaw!=0):
             self.current_pose[bot][2]=yaw
-        print('yaw',yaw,'bot:',bot)
+        # print('yaw',yaw,'bot:',bot)
 
     def angle(self,y,x):
         x=x+0.000001
@@ -59,6 +59,7 @@ class pose_publisher:
             (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
 
             #now starting to localise bot wrt to the ids
+
             a=np.where(ids==10)
             if a[0].size==1:
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
@@ -79,6 +80,10 @@ class pose_publisher:
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
                 topLeft = (int(topLeft[0]), int(topLeft[1]))
+                scale=sqrt((bottomRight[0]-bottomLeft[0])*(bottomRight[0]-bottomLeft[0])+(bottomRight[1]-bottomLeft[1])*(bottomRight[1]-bottomLeft[1]))
+                # print(scale,scale/9.9)
+                print(topLeft[0],topLeft[1])
+                print(topRight[0],topRight[1])
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)        
                 self.change_pose(1,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
@@ -107,9 +112,15 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)     
                 self.change_pose(3,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
                 
-
+            img=cv2.rectangle(img,(25,405),(50,335),(0,0,55),-1)
+            img=cv2.rectangle(img,(585,425),(610,360),(0,0,255),-1)
+            img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
+            img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
+            img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
+            img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
             cv2.imshow('frame', img)
             cv2.waitKey(1)
+            cv2.imwrite('final2.jpg',img)
             self.bot1_pose.x=self.current_pose[0][0]
             self.bot1_pose.y=self.current_pose[0][1]
             self.bot1_pose.theta=self.current_pose[0][2] 
