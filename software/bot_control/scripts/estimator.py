@@ -10,14 +10,14 @@ from geometry_msgs.msg import Pose2D
 
 class pose_publisher:
     def __init__(self):
-        self.current_pose=np.array([[0.6858,0.2286,3.10],[0.6858,0.0762,3.10],[0.6858,-0.0762,3.10],[0.6858,-0.2286,3.10]])
+        self.current_pose=np.array([[234,311,0.0],[264,312,0.0],[295,314,0.0],[325,315,0.0]])
         self.bot1_pose=Pose2D()
         self.bot2_pose=Pose2D()
         self.bot3_pose=Pose2D()
         self.bot4_pose=Pose2D()
-        self.lin_threshold=0.3
+        self.lin_threshold=70
         self.yaw_threshold=1.2
-        self.factor=0.00269541
+        self.factor=1
         self.pub_bot1_pose=rospy.Publisher('/bot1_pose',Pose2D,queue_size=1)
         self.pub_bot2_pose=rospy.Publisher('/bot2_pose',Pose2D,queue_size=1)
         self.pub_bot3_pose=rospy.Publisher('/bot3_pose',Pose2D,queue_size=1)
@@ -61,9 +61,6 @@ class pose_publisher:
             img=img[50:390,25:630]
             img1=img1[50:390,25:630]
             img=cv2.resize(img,(1815,1020))
-            # img=img[5:110,190:300]
-            # img1=img
-            # img1=cv2.rectangle(img1,(0,0),(605,340),(0,0,0),-1)
             
             img1=cv2.line(img1,(234,311),(244,72),(200,130,130),25)
             img1=cv2.line(img1,(244,72),(53,65),(200,130,130),25)
@@ -108,7 +105,7 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 img=cv2.circle(img,(cX,cY),10,(100,65,65),-1)
                 img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(100,64,65),-1)
-                self.change_pose(0,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                self.change_pose(0,cX,xY,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
                 
             a=np.where(ids==20)
             if a[0].size==1:
@@ -117,17 +114,11 @@ class pose_publisher:
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
                 topLeft = (int(topLeft[0]), int(topLeft[1]))
-                scale=sqrt((bottomRight[0]-bottomLeft[0])*(bottomRight[0]-bottomLeft[0])+(bottomRight[1]-bottomLeft[1])*(bottomRight[1]-bottomLeft[1]))
-                # print(scale,scale/9.9)
-                # print(topLeft[0],topLeft[1])
-                # print(topRight[0],topRight[1])
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 img=cv2.circle(img,(cX,cY),10,(100,64,100),-1)
-                img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(100,64,100),-1)
-                yaw=self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1]))
-                print(cX,cY,yaw)        
-                self.change_pose(1,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(100,64,100),-1)     
+                self.change_pose(1,cX,cY,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
            
             a=np.where(ids==30)
             if a[0].size==1:
@@ -140,8 +131,7 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 img=cv2.circle(img,(cX,cY),10,(50,60,100),-1)  
                 img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(50,60,100),-1)
-                # print(cX,cY)
-                self.change_pose(2,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                self.change_pose(2,cX,cY,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
                 
             a=np.where(ids==40)
             if a[0].size==1:
@@ -154,20 +144,12 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 img=cv2.circle(img,(cX,cY),10,(50,100,80),-1)
                 img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(50,100,80),-1)
-
-                self.change_pose(3,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                self.change_pose(3,cX,cY,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
             
-            # img=cv2.rectangle(img,(25,405),(50,335),(0,0,55),-1)
-            # img=cv2.rectangle(img,(585,425),(610,360),(0,0,255),-1)
-            # img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
-            # img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
-            # img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
-            # img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
             cv2.imshow('original_image', img)
             cv2.waitKey(1)
             cv2.imshow('processed_image',img1)
             cv2.waitKey(1)
-
 
             self.bot1_pose.x=self.current_pose[0][0]
             self.bot1_pose.y=self.current_pose[0][1]
