@@ -10,13 +10,13 @@ from geometry_msgs.msg import Pose2D
 
 class pose_publisher:
     def __init__(self):
-        self.current_pose=np.array([[234,311,0.0],[264,312,0.0],[295,314,0.0],[325,315,0.0]])
+        self.current_pose=np.array([[234,311,pi/2],[264,312,0.0],[295,314,0.0],[325,315,0.0]])
         self.bot1_pose=Pose2D()
         self.bot2_pose=Pose2D()
         self.bot3_pose=Pose2D()
         self.bot4_pose=Pose2D()
-        self.lin_threshold=70
-        self.yaw_threshold=1.2
+        self.lin_threshold=200
+        self.yaw_threshold=2
         self.factor=1
         self.pub_bot1_pose=rospy.Publisher('/bot1_pose',Pose2D,queue_size=1)
         self.pub_bot2_pose=rospy.Publisher('/bot2_pose',Pose2D,queue_size=1)
@@ -49,7 +49,7 @@ class pose_publisher:
         elif(x<0 and y<0):
             return (atan(y/x)-pi)
         else:
-            return atan(y/x)
+            return atan(y/(x+0.00001))
 
     def callback_opencv(self):
         while not rospy.is_shutdown():
@@ -94,7 +94,7 @@ class pose_publisher:
             img1=cv2.line(img1,(44,19),(43,84),(0,0,0),3)
 
             (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
-            a=np.where(ids==10)
+            a=np.where(ids==20)
             if a[0].size==1:
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
                 topRight = (int(topRight[0]), int(topRight[1]))
@@ -105,9 +105,10 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 img=cv2.circle(img,(cX,cY),10,(100,65,65),-1)
                 img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(100,64,65),-1)
-                self.change_pose(0,cX,xY,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                print(cX/3,cY/3)
+                self.change_pose(0,cY/3,cX/3,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
                 
-            a=np.where(ids==20)
+            a=np.where(ids==10)
             if a[0].size==1:
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
                 topRight = (int(topRight[0]), int(topRight[1]))
@@ -118,7 +119,7 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 img=cv2.circle(img,(cX,cY),10,(100,64,100),-1)
                 img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(100,64,100),-1)     
-                self.change_pose(1,cX,cY,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                self.change_pose(1,cX/3,cY/3,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
            
             a=np.where(ids==30)
             if a[0].size==1:
@@ -131,7 +132,7 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 img=cv2.circle(img,(cX,cY),10,(50,60,100),-1)  
                 img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(50,60,100),-1)
-                self.change_pose(2,cX,cY,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
+                self.change_pose(2,cX/3,cY/3,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
                 
             a=np.where(ids==40)
             if a[0].size==1:

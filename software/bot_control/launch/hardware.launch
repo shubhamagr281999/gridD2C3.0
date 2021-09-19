@@ -1,0 +1,21 @@
+<launch>
+    <arg name="use_sim_time"       default="true"/>
+    <arg name="gui"                default="true"/>
+    <arg name="headless"           default="false"/>
+    <arg name="paused"             default="false"/>
+    <arg name="lite"               default="false"/>
+    <arg name="world_init_heading" default="3.14" />
+
+<!-- loading pose estimator/odom -->
+<node pkg="bot_control" type="estimator.py" name="pose_estimator" output="screen"/>
+
+<!-- controller node -->
+<node pkg="bot_control" type="pid_control_bot1.py" name="controller_node_bot1" output="screen"/>
+<!-- <node pkg="bot_control" type="pid_control_bot2.py" name="controller_node_bot2" output="screen"/> -->
+<!-- <node pkg="bot_control" type="pid_control_bot3.py" name="controller_node_bot3" output="screen"/> -->
+<!-- <node pkg="bot_control" type="pid_control_bot4.py" name="controller_node_bot4" output="screen"/> -->
+
+<!-- goal publisher -->
+<node pkg='bot_control' type="arena1_goal_pub.py" name="gaol_publisher" output="screen"/>
+
+</launch>

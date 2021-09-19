@@ -84,47 +84,63 @@ class goal_publisher:
 
     def goal(self):
         if self.count==0:
-            self.goal_pose[0][0]=-0.53
+            self.goal_pose[0][0]=244
+            self.goal_pose[0][1]=72
         elif self.count==1:
-            self.goal_pose[0][1]=1.27
+            self.goal_pose[0][0]=53
+            self.goal_pose[0][1]=65
         elif self.count==2:
             self.flipmotor(1)
-            self.goal_pose[0][1]=0.2286
+            self.goal_pose[0][0]=244
+            self.goal_pose[0][1]=72
         elif self.count==3:
-            self.goal_pose[0][0]=0.6858
+            self.goal_pose[0][0]=234
+            self.goal_pose[0][1]=311
 
         elif self.count==4:
             self.mission_bot=self.mission_bot+1
-            self.goal_pose[1][0]=-0.68
+            self.goal_pose[0][0]=272
+            self.goal_pose[0][1]=40
         elif self.count==5:
-            self.goal_pose[1][1]=1.27
+            self.goal_pose[0][0]=55
+            self.goal_pose[0][1]=36
         elif self.count==6:
             self.flipmotor(2)
-            self.goal_pose[1][1]=0.0762
+            self.goal_pose[0][0]=272
+            self.goal_pose[0][1]=40
         elif self.count==7:
-            self.goal_pose[1][0]=0.6858
+            self.goal_pose[0][0]=264
+            self.goal_pose[0][1]=312
 
         elif self.count==8:
             self.mission_bot=self.mission_bot+1
-            self.goal_pose[2][0]=-0.68
+            self.goal_pose[0][0]=305
+            self.goal_pose[0][1]=42
         elif self.count==9:
-            self.goal_pose[2][1]=-1.27
+            self.goal_pose[0][0]=556
+            self.goal_pose[0][1]=46
         elif self.count==10:
             self.flipmotor(3)
-            self.goal_pose[2][1]=-0.0762
+            self.goal_pose[0][0]=305
+            self.goal_pose[0][1]=42
         elif self.count==11:
-            self.goal_pose[2][0]=0.6858
+            self.goal_pose[0][0]=295
+            self.goal_pose[0][1]=314
 
         elif self.count==12:
             self.mission_bot=self.mission_bot+1
-            self.goal_pose[3][0]=-0.53
+            self.goal_pose[0][0]=336
+            self.goal_pose[0][1]=72
         elif self.count==13:
-            self.goal_pose[3][1]=-1.27
+            self.goal_pose[0][0]=556
+            self.goal_pose[0][1]=77
         elif self.count==14:
             self.flipmotor(4)
-            self.goal_pose[3][1]=-0.2286
+            self.goal_pose[0][0]=336
+            self.goal_pose[0][1]=72
         elif self.count==15:
-            self.goal_pose[3][0]=0.6858
+            self.goal_pose[0][0]=325
+            self.goal_pose[0][1]=314
         self.pub_msg()
         print('goal sent| count:', self.count)
 
@@ -138,7 +154,7 @@ if __name__ == '__main__':
           pass
         rospy.loginfo("goal_publisher created | now goal for each bot will be published on goal topics")
         goal_pub_obj=goal_publisher()
-        time.sleep(20)
+        time.sleep(5)
         goal_pub_obj.goal()
         rospy.spin()
 
