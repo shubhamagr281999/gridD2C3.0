@@ -1,5 +1,6 @@
 #! /usr/bin/env python2.7
 
+import os
 import rospy
 from time import sleep
 from tf.transformations import euler_from_quaternion
@@ -53,6 +54,12 @@ class PID:
         self.lastTime = 0
         self.last = 0
 
+
+        self.oL=5.0
+        self.oR=2.0
+        self.s=3.0
+        self.final()
+
     def current_state_callback(self,msg):
         self.current_pose_x=msg.x
         self.current_pose_y=msg.y
@@ -88,7 +95,14 @@ class PID:
         self.sumError = 0
         self.lastTime = 0
 
-
+    def final(self):
+        f = open("./a.txt",'w',0)
+        print(f)
+        f.write("{},{},{}".format(self.oL, self.oR, self.s))
+        f.flush()
+        os.fsync(f)
+        f.close()
+        return
 
     def angle(self,y,x):
         if(x>0 and y>0):

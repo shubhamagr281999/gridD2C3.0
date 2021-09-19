@@ -22,7 +22,7 @@ class pose_publisher:
         self.pub_bot2_pose=rospy.Publisher('/bot2_pose',Pose2D,queue_size=1)
         self.pub_bot3_pose=rospy.Publisher('/bot3_pose',Pose2D,queue_size=1)
         self.pub_bot4_pose=rospy.Publisher('/bot4_pose',Pose2D,queue_size=1)
-        self.vid = cv2.VideoCapture(2)
+        self.vid = cv2.VideoCapture(0)
         # self.camera_sub=rospy.Subscriber("/arena/arena1/camera1/image_raw", Image, self.callback_opencv)
     def angle_bound(self,a):
         if(a<-pi):
@@ -54,73 +54,121 @@ class pose_publisher:
     def callback_opencv(self):
         while not rospy.is_shutdown():
             ret, img = self.vid.read()
+            ret, img1 = self.vid.read()
             arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_7X7_50)
             arucoParams = cv2.aruco.DetectorParameters_create()
-            (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
-
             #now starting to localise bot wrt to the ids
+            img=img[50:390,25:630]
+            img1=img1[50:390,25:630]
+            img=cv2.resize(img,(1815,1020))
+            # img=img[5:110,190:300]
+            # img1=img
+            # img1=cv2.rectangle(img1,(0,0),(605,340),(0,0,0),-1)
+            
+            img1=cv2.line(img1,(234,311),(244,72),(200,130,130),25)
+            img1=cv2.line(img1,(244,72),(53,65),(200,130,130),25)
 
+            img1=cv2.line(img1,(272,40),(264,312),(200,130,200),25)
+            img1=cv2.line(img1,(272,40),(55,36),(200,130,200),25)
+            
+            img1=cv2.line(img1,(305,42),(295,314),(100,120,200),25)
+            img1=cv2.line(img1,(305,42),(556,46),(100,120,200),25)
+            
+            img1=cv2.line(img1,(336,72),(325,315),(100,200,160),25)
+            img1=cv2.line(img1,(336,72),(556,77),(100,200,160),25)
+
+            # img1=cv2.line(img1,(23,70),(25,30),(70,40,30),30)
+            # img1=cv2.line(img1,(586,80),(586,40),(70,40,30),30)
+
+            img1=cv2.line(img1,(214,291),(345,297),(0,0,0),3)
+            img1=cv2.line(img1,(218,321),(226,90),(0,0,0),3)
+            img1=cv2.line(img1,(248,321),(259,60),(0,0,0),3)
+            img1=cv2.line(img1,(259,60),(43,54),(0,0,0),3)
+            img1=cv2.line(img1,(226,90),(43,84),(0,0,0),3)
+            img1=cv2.line(img1,(289,24),(276,323),(0,0,0),3)
+            img1=cv2.line(img1,(44,19),(289,24),(0,0,0),3)
+            img1=cv2.line(img1,(309,323),(320,54),(0,0,0),3)
+            img1=cv2.line(img1,(320,54),(571,60),(0,0,0),3)
+            img1=cv2.line(img1,(289,24),(572,28),(0,0,0),3)
+            img1=cv2.line(img1,(350,88),(571,92),(0,0,0),3)
+            img1=cv2.line(img1,(350,88),(339,326),(0,0,0),3)
+            img1=cv2.line(img1,(218,321),(339,326),(0,0,0),3)
+            img1=cv2.line(img1,(572,26),(569,92),(0,0,0),3)
+            img1=cv2.line(img1,(44,19),(43,84),(0,0,0),3)
+
+            (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
             a=np.where(ids==10)
             if a[0].size==1:
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
-                img=cv2.rectangle(img,(topLeft[0],topLeft[1]),(bottomRight[0],bottomRight[1]),(0,255,0),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
                 topLeft = (int(topLeft[0]), int(topLeft[1]))
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                img=cv2.circle(img,(cX,cY),10,(100,65,65),-1)
+                img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(100,64,65),-1)
                 self.change_pose(0,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
                 
             a=np.where(ids==20)
             if a[0].size==1:
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
-                img=cv2.rectangle(img,(topLeft[0],topLeft[1]),(bottomRight[0],bottomRight[1]),(0,255,255),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
                 topLeft = (int(topLeft[0]), int(topLeft[1]))
                 scale=sqrt((bottomRight[0]-bottomLeft[0])*(bottomRight[0]-bottomLeft[0])+(bottomRight[1]-bottomLeft[1])*(bottomRight[1]-bottomLeft[1]))
                 # print(scale,scale/9.9)
-                print(topLeft[0],topLeft[1])
-                print(topRight[0],topRight[1])
+                # print(topLeft[0],topLeft[1])
+                # print(topRight[0],topRight[1])
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-                cY = int((topLeft[1] + bottomRight[1]) / 2.0)        
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                img=cv2.circle(img,(cX,cY),10,(100,64,100),-1)
+                img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(100,64,100),-1)
+                yaw=self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1]))
+                print(cX,cY,yaw)        
                 self.change_pose(1,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
-                
+           
             a=np.where(ids==30)
             if a[0].size==1:
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
-                img=cv2.rectangle(img,topLeft,bottomRight,(255,255,0),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
                 topLeft = (int(topLeft[0]), int(topLeft[1]))
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-                cY = int((topLeft[1] + bottomRight[1]) / 2.0)     
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                img=cv2.circle(img,(cX,cY),10,(50,60,100),-1)  
+                img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(50,60,100),-1)
+                # print(cX,cY)
                 self.change_pose(2,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
                 
             a=np.where(ids==40)
             if a[0].size==1:
                 (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
-                img=cv2.rectangle(img,topLeft,bottomRight,(0,0,255),3)
                 topRight = (int(topRight[0]), int(topRight[1]))
                 bottomRight = (float(bottomRight[0]), float(bottomRight[1]))
                 bottomLeft = (float(bottomLeft[0]), float(bottomLeft[1]))
                 topLeft = (int(topLeft[0]), int(topLeft[1]))
                 cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-                cY = int((topLeft[1] + bottomRight[1]) / 2.0)     
+                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
+                img=cv2.circle(img,(cX,cY),10,(50,100,80),-1)
+                img1=cv2.circle(img1,(int(cX/3),int(cY/3)),10,(50,100,80),-1)
+
                 self.change_pose(3,-(cX-img.shape[1]/2.0)*self.factor,-(cY-img.shape[0]/2.0)*self.factor,self.angle((bottomRight[0]- bottomLeft[0]),(bottomRight[1]- bottomLeft[1])))
-                
-            img=cv2.rectangle(img,(25,405),(50,335),(0,0,55),-1)
-            img=cv2.rectangle(img,(585,425),(610,360),(0,0,255),-1)
-            img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
-            img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
-            img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
-            img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
-            cv2.imshow('frame', img)
+            
+            # img=cv2.rectangle(img,(25,405),(50,335),(0,0,55),-1)
+            # img=cv2.rectangle(img,(585,425),(610,360),(0,0,255),-1)
+            # img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
+            # img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
+            # img=cv2.rectangle(img,(52,400),(80,370),(110,40,0),-1)
+            # img=cv2.rectangle(img,(52,365),(80,335),(80,140,0),-1)
+            cv2.imshow('original_image', img)
             cv2.waitKey(1)
-            cv2.imwrite('final2.jpg',img)
+            cv2.imshow('processed_image',img1)
+            cv2.waitKey(1)
+
+
             self.bot1_pose.x=self.current_pose[0][0]
             self.bot1_pose.y=self.current_pose[0][1]
             self.bot1_pose.theta=self.current_pose[0][2] 

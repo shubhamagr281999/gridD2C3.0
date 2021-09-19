@@ -10,7 +10,7 @@ from std_msgs.msg import Bool
 class goal_publisher:
     def __init__(self):
         self.rate_move=rospy.Rate(0.5)
-        self.goal_pose=[[0.6858,0.2286,0.0],[0.6858,0.0762,0.0],[0.6858,-0.0762,0.0],[0.6858,-0.2286,0.0]]
+        self.goal_pose=[[234,311,0.0],[264,312,0.0],[295,314,0.0],[325,315,0.0]]
         self.time_for_flipping=2
         self.count=0
         self.mission_bot=1
@@ -103,7 +103,6 @@ class goal_publisher:
             self.goal_pose[1][1]=0.0762
         elif self.count==7:
             self.goal_pose[1][0]=0.6858
-
 
         elif self.count==8:
             self.mission_bot=self.mission_bot+1
