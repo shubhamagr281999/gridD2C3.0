@@ -1,13 +1,13 @@
 <launch>
-    <param name="robot_description1" command="cat '$(find bot_description)/urdf/bot1.urdf' " />
+    <param name="robot_description" command="cat '$(find bot_description)/urdf/bot1.urdf' " />
     <node name="bot_robot_state_publisher1" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" output="screen">
         <param name="publish_frequency" type="double" value="30.0" />
         <param name="ignore_timestamp" type="bool" value="true" />
-        <remap from="robot_description" to="robot_description1"/>
+        <remap from="robot_description" to="robot_description"/>
     </node>
     <node name="joint_state_publisher1" pkg="joint_state_publisher" type="joint_state_publisher">
     <param name="/use_gui" value="false"/>
-    <remap from="robot_description" to="robot_description1"/>
+    <remap from="robot_description" to="robot_description"/>
     </node>
 
     

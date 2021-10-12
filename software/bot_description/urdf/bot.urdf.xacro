@@ -1,14 +1,14 @@
 <?xml version="1.0"?>
-<robot name="bot4" xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:property name="wheel_dia" value="0.05"/>
-	<xacro:property name="bot_height" value="0.07"/>
+<robot name="bot1" xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:property name="wheel_dia" value="0.04"/>
+	<xacro:property name="bot_height" value="0.03"/>
 	<xacro:property name="length" value="0.08"/>
 	<xacro:property name="breadth" value="0.08"/>
 	<xacro:property name="pi" value="3.14159"/>
 	<xacro:property name="m_base" value="1"/>
-	<xacro:property name="m_wheel" value="0.3"/>
-	<xacro:property name="m_aruco" value="0.1"/>
-	<xacro:property name="m_caster_wheel" value="4"/>
+	<xacro:property name="m_wheel" value="0.4"/>
+	<xacro:property name="m_aruco" value="0.04"/>
+	<xacro:property name="m_caster_wheel" value="0.1"/>
   	<xacro:property name="bot_number" value="1"/>
 
 
@@ -26,11 +26,36 @@
 			</geometry>
 		</collision>
 		<visual>
-			<origin xyz="0 0 0.02" rpy="0 0 0"/>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
 				<box size="${length} ${breadth} 0.008"/>
 			</geometry>
 		</visual>
+
+		<!-- caster -->
+	<!-- 	<collision name="caster_wheel_collision">
+			<origin xyz="${length/2-0.02} 0 -0.02" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="${wheel_dia/4.0}"/>
+			</geometry>			
+			<surface>
+		        <friction>
+		          <ode>
+		            <mu>0</mu>
+		            <mu2>0</mu2>
+		            <slip1>1.0</slip1>
+		            <slip2>1.0</slip2>
+		          </ode>
+		        </friction>
+      		</surface>
+		</collision>
+		<visual name ="caster_wheel_visual">
+			<origin xyz="${length/2-0.02} 0 -0.02" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="${wheel_dia/4.0}"/>
+			</geometry>
+		</visual> -->
+
 	</link>
 	<link name="aruco">
 		<inertial>
@@ -89,85 +114,145 @@
 			</geometry>
 		</visual>
 	</link>
-	<link name="caster_wheel">
+
+	<link name="left_wheel_dumy">
 		<inertial>
      		<origin xyz="0 0 0" rpy="0 0 0"/>
-     		<mass value="${m_caster_wheel}"/>
-     		<inertia ixx="${m_caster_wheel*(2*wheel_dia*wheel_dia/9.0)/5.0}"  ixy="0"  ixz="0" iyy="${m_caster_wheel*(2*wheel_dia*wheel_dia/9.0)/5.0}" iyz="0" izz="${m_caster_wheel*(2*wheel_dia*wheel_dia/9.0)/5.0}" />
-   		</inertial>
+     		<mass value="${m_wheel}"/>
+     		<inertia ixx="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}"  ixy="0"  ixz="0" iyy="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}" iyz="0" izz="${m_wheel*(wheel_dia*wheel_dia/4)/2.0}" />
+   		</inertial>		
 		<collision>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
-				<sphere radius="${wheel_dia/3.0}"/>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
 			</geometry>
 		</collision>
 		<visual>
 			<origin xyz="0 0 0" rpy="0 0 0"/>
 			<geometry>
-				<sphere radius="${wheel_dia/3.0}"/>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
+			</geometry>
+		</visual>
+	</link>
+	<link name="right_wheel_dumy">
+		<inertial>
+     		<origin xyz="0 0 0" rpy="0 0 0"/>
+     		<mass value="${m_wheel}"/>
+     		<inertia ixx="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}"  ixy="0"  ixz="0" iyy="${m_wheel*(3*wheel_dia*wheel_dia/4.0+0.008*0.008)/12.0}" iyz="0" izz="${m_wheel*(wheel_dia*wheel_dia/4)/2.0}" />
+   		</inertial>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
+			</geometry>
+		</collision>
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<cylinder radius="${wheel_dia/2.0}" length="0.008"/>
 			</geometry>
 		</visual>
 	</link>
 
+	<!-- <link name="caster_wheel">
+		<inertial>
+     		<origin xyz="0 0 0" rpy="0 0 0"/>
+     		<mass value="${m_caster_wheel}"/>
+     		<inertia ixx="${m_caster_wheel*(2*wheel_dia*wheel_dia/16.0)/5.0}"  ixy="0"  ixz="0" iyy="${m_caster_wheel*(2*wheel_dia*wheel_dia/16.0)/5.0}" iyz="0" izz="${m_caster_wheel*(2*wheel_dia*wheel_dia/16.0)/5.0}" />
+   		</inertial>
+		<collision>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="${wheel_dia/4.0}"/>
+			</geometry>			
+			<surface>
+		        <friction>
+		          <ode>
+		            <mu>0</mu>
+		            <mu2>0</mu2>
+		            <slip1>1.0</slip1>
+		            <slip2>1.0</slip2>
+		          </ode>
+		        </friction>
+      		</surface>
+		</collision>
+		<visual>
+			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<geometry>
+				<sphere radius="${wheel_dia/4.0}"/>
+			</geometry>
+		</visual>
+	</link> -->
+
 <!-- joints def -->
 
-	<joint name="base_link_inertia_joint" type="fixed">
+	<joint name="base_link_inertia_joint_${bot_number}" type="fixed">
 		<parent link="base_link"/>
 		<child link="base_link_inertia"/>
 		<origin rpy="0 0 0" xyz="0 0 0"/>
 	</joint>
-	<joint name="aruco_joint" type="fixed">
+	<joint name="aruco_joint_${bot_number}" type="fixed">
 		<parent link="base_link"/>
 		<child link="aruco"/>
-		<origin rpy="0 0 0" xyz="0 0 0.05"/>
+		<origin rpy="0 0 0" xyz="0 0 0.07"/>
 	</joint>
 	<joint name="bot${bot_number}_left_wheel_joint" type="continuous">
 		<parent link="base_link"/>
 		<child link="left_wheel"/>
-		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.02 ${breadth/2+0.008}  -0.015"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.03 ${breadth/2+0.008}  -0.01"/>
 		<axis rpy="0 0 0" xyz="0 0 1"/>
 	</joint>	
 	<joint name="bot${bot_number}_right_wheel_joint" type="continuous">
 		<parent link="base_link"/>
 		<child link="right_wheel"/>
-		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.02 ${-breadth/2-0.008}  -0.015"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.03 ${-breadth/2-0.008}  -0.01"/>
 		<axis rpy="0 0 0" xyz="0 0 1"/>
 	</joint>
-	<joint name="caster_wheel_joint" type="continuous">
+
+	<joint name="bot${bot_number}_left_wheel_joint_dumy" type="continuous">
 		<parent link="base_link"/>
-		<child link="caster_wheel"/>
-		<origin rpy="0 0 0" xyz="${length/2-0.02} 0 ${-0.015- wheel_dia/6}"/>
-		<axis rpy="0 0 0" xyz="0 1 0"/>
+		<child link="left_wheel_dumy"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="0.03 ${breadth/2+0.008}  -0.01"/>
+		<axis rpy="0 0 0" xyz="0 0 1"/>
+	</joint>	
+	<joint name="bot${bot_number}_right_wheel_joint_dumy" type="continuous">
+		<parent link="base_link"/>
+		<child link="right_wheel_dumy"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="0.03 ${-breadth/2-0.008}  -0.01"/>
+		<axis rpy="0 0 0" xyz="0 0 1"/>
 	</joint>
 
 	<!-- controls plugin for vlecoty based control -->
-	<gazebo>
-        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-            <legacyModeNS>true</legacyModeNS>
-            <robotNamespace>/bot${bot_number}</robotNamespace>
-        </plugin>
-	</gazebo>
 
-  <transmission name="bot${bot_number}_left_wheel_trans">
-    <type>transmission_interface/SimpleTransmission</type>
-    <joint name="bot${bot_number}_left_wheel_joint">
-        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-    </joint>
-    <actuator name="bot${bot_number}_left_wheel_joint_motor">
-        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        <mechanicalReduction>1</mechanicalReduction>
-    </actuator>
-  </transmission>
-
-  <transmission name="bot${bot_number}_right_wheel_trans">
-    <type>transmission_interface/SimpleTransmission</type>
-    <joint name="bot${bot_number}_right_wheel_joint">
-        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-    </joint>
-    <actuator name="bot${bot_number}_right_wheel_joint_motor">
-        <hardwareInterface>hardware_interface/EffortJointInterface</hardwareInterface>
-        <mechanicalReduction>1</mechanicalReduction>
-    </actuator>
-  </transmission>
+<gazebo>
+    <plugin filename="libgazebo_ros_diff_drive.so" name="differential_drive_controller">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>2</updateRate>
+      <leftJoint>bot${bot_number}_left_wheel_joint</leftJoint>
+      <rightJoint>bot${bot_number}_right_wheel_joint</rightJoint>
+      <wheelSeparation>0.096</wheelSeparation>
+      <wheelDiameter>0.04</wheelDiameter>
+      <torque>1</torque>
+      <commandTopic>cmd_vel</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_link</robotBaseFrame>
+    </plugin>
+  </gazebo>
+<gazebo>
+    <plugin filename="libgazebo_ros_diff_drive.so" name="differential_drive_controller">
+      <alwaysOn>true</alwaysOn>
+      <updateRate>2</updateRate>
+      <leftJoint>bot${bot_number}_left_wheel_joint_dumy</leftJoint>
+      <rightJoint>bot${bot_number}_right_wheel_joint_dumy</rightJoint>
+      <wheelSeparation>0.096</wheelSeparation>
+      <wheelDiameter>0.04</wheelDiameter>
+      <torque>1</torque>
+      <commandTopic>cmd_vel_dumy</commandTopic>
+      <odometryTopic>odom</odometryTopic>
+      <odometryFrame>odom</odometryFrame>
+      <robotBaseFrame>base_link</robotBaseFrame>
+    </plugin>
+  </gazebo>
 
 </robot>
