@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+
+import rospy
 import sys
 sys.path.insert(0, '../')
 import argparse
@@ -5,7 +8,8 @@ import yaml
 from math import fabs
 from itertools import combinations
 from copy import deepcopy
-
+from bot_control.msg import StartGoal, CompletePlan, PathArray
+from geometry_msgs.msg import Point
 from cbs.a_star import AStar
 
 class Location(object):
@@ -300,55 +304,87 @@ class CBS(object):
             path_dict_list = [{'t':state.time, 'x':state.location.x, 'y':state.location.y} for state in path]
             # print(path_dict_list)
             plan[agent] = path_dict_list
-        print(len(plan['agent1']))
+        # print(len(plan['agent1']))
         return plan
 
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("param", help="input file containing map and obstacles")
-    parser.add_argument("output", help="output file with the schedule")
-    args = parser.parse_args()
+class wrapper:
+    def __init__ (self):
+        self.start_goal_agent_sub=rospy.Subscriber("/start_goal_agents", StartGoal, self.start_goal_callback)
+        self.cbs_plan_pub=rospy.Publisher("/cbs/plan",CompletePlan,queue_size=1)
+        self.start_x=[]
+        self.start_y=[]
+        self.goal_x=[]
+        self.goal_y=[]
+        self.parser = argparse.ArgumentParser()
+        self.parser.add_argument("param", help="input file containing map and obstacles")
+        self.parser.add_argument("output", help="output file with the schedule")
+        self.args = self.parser.parse_args()
+        # self.main()
+    def main2(self):
+        # Read from input file
+        with open(self.args.param, 'r') as param_file:
+            try:
+                param = yaml.load(param_file, Loader=yaml.FullLoader)
+            except yaml.YAMLError as exc:
+                print(exc)
 
-    # Read from input file
-    with open(args.param, 'r') as param_file:
-        try:
-            param = yaml.load(param_file, Loader=yaml.FullLoader)
-        except yaml.YAMLError as exc:
-            print(exc)
+        dimension = param["map"]["dimensions"]
+        obstacles = param["map"]["obstacles"]
+        agents = param['agents']
+        n_agents=len(self.start_x)
+        for i in range(n_agents):
+            agents[i]['start']=[self.start_x[i],self.start_y[i]]
+            agents[i]['goal']=[self.goal_x[i],self.goal_y[i]]
+        env = Environment(dimension, agents, obstacles)
 
-    dimension = param["map"]["dimensions"]
-    obstacles = param["map"]["obstacles"]
-    agents = param['agents']
-    print(agents)
-    # start_loc=Location()
-    # start_loc.x=1;
-    # start_loc.y=5;
-    agents[0]['start']=[1, 7];
-    print(agents[0]['start'])
-    print(agents)
+        # Searching
+        cbs = CBS(env)
+        solution = cbs.search()
+        if not solution:
+            print(" Solution not found" )
+            return
+        list1_init=PathArray()
+        msg=CompletePlan()
+        # list_agent=[]
+        # for k in range(n_agents):
+        #     list_agent.append(list1_init)
+        # msg.agent=list_agent
+        for i in range(n_agents):
+            n_states=len(solution[i])
+            path_agenti=[]
+            for j in range(n_states):
+                k=Point()
+                k.x=solution[i][j]['x']
+                k.y=solution[i][j]['y']
+                path_agenti.append(k)
+            temp_pathi=PathArray()
+            temp_pathi=path_agenti
+            msg.agent.append(temp_pathi)
+        print(msg)
+        # Write to output file
+        with open(self.args.output, 'r') as output_yaml:
+            try:
+                output = yaml.load(output_yaml, Loader=yaml.FullLoader)
+            except yaml.YAMLError as exc:
+                print(exc)
+                
+        output["schedule"] = solution
+        output["cost"] = env.compute_solution_cost(solution)
 
-    env = Environment(dimension, agents, obstacles)
-
-    # Searching
-    cbs = CBS(env)
-    solution = cbs.search()
-    if not solution:
-        print(" Solution not found" )
-        return
-
-    # Write to output file
-    with open(args.output, 'r') as output_yaml:
-        try:
-            output = yaml.load(output_yaml, Loader=yaml.FullLoader)
-        except yaml.YAMLError as exc:
-            print(exc)
-
-    output["schedule"] = solution
-    output["cost"] = env.compute_solution_cost(solution)
-    with open(args.output, 'w') as output_yaml:
-        yaml.safe_dump(output, output_yaml)
-
+        with open(self.args.output, 'w') as output_yaml:
+            yaml.safe_dump(output, output_yaml)
+    def start_goal_callback(self,data):
+        self.start_x=data.start_x
+        self.start_y=data.start_y
+        self.goal_x=data.goal_x
+        self.goal_y=data.goal_y
+        self.main2()
+    
 
 if __name__ == "__main__":
-    main()
+    rospy.init_node("cbs")
+    rospy.loginfo("CBS node created")
+        
+    obj=wrapper()
+    rospy.spin()

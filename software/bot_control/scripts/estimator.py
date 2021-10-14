@@ -7,7 +7,8 @@ from sensor_msgs.msg import Image
 import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Pose2D
-
+# from bot_control.msg import StartGoal
+from drdo_exploration.msg import teleopData
 class pose_publisher:
     def __init__(self):
         self.current_pose=np.array([[234,311,pi/2],[264,312,0.0],[295,314,0.0],[325,315,0.0]])
