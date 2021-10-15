@@ -12,8 +12,9 @@ class pose_publisher:
         self.data.start_y=[6,7,5,0,3]
         self.data.goal_x=[2,0,5,0,0]
         self.data.goal_y=[4,2,2,7,11]
+        self.data.bot_num=[0,1,2,3,4]
         print(self.data)
-        while(True):
+        while not rospy.is_shutdown(): 
             time.sleep(1) 
             self.pub_test.publish(self.data)
 

@@ -54,6 +54,7 @@ add_message_files(
   StartGoal.msg
   PathArray.msg
   CompletePlan.msg
+  Poses.msg
 )
 
 ## Generate services in the 'srv' folder

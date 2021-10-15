@@ -12,6 +12,8 @@ from bot_control.msg import StartGoal, CompletePlan, PathArray
 from geometry_msgs.msg import Point
 from cbs.a_star import AStar
 
+import numpy as np
+
 class Location(object):
     def __init__(self, x=-1, y=-1):
         self.x = x
@@ -216,10 +218,10 @@ class Environment(object):
 
     def make_agent_dict(self):
         for agent in self.agents:
-            start_state = State(0, Location(agent['start'][0], agent['start'][1]))
-            goal_state = State(0, Location(agent['goal'][0], agent['goal'][1]))
+            start_state = State(0, Location(agent[1][0], agent[1][1]))
+            goal_state = State(0, Location(agent[2][0], agent[2][1]))
 
-            self.agent_dict.update({agent['name']:{'start':start_state, 'goal':goal_state}})
+            self.agent_dict.update({agent[0]:{'start':start_state, 'goal':goal_state}})
 
     def compute_solution(self):
         solution = {}
@@ -331,13 +333,12 @@ class wrapper:
 
         dimension = param["map"]["dimensions"]
         obstacles = param["map"]["obstacles"]
-        agents = param['agents']
-        n_agents=len(self.start_x)
+        agents = []
+        n_agents=len(self.bot_num)
         for i in range(n_agents):
-            agents[i]['start']=[self.start_x[i],self.start_y[i]]
-            agents[i]['goal']=[self.goal_x[i],self.goal_y[i]]
+            agents.append([self.bot_num[i],[self.start_x[i],self.start_y[i]],[self.goal_x[i],self.goal_y[i]]])
         env = Environment(dimension, agents, obstacles)
-
+        print(agents)
         # Searching
         cbs = CBS(env)
         solution = cbs.search()
@@ -346,10 +347,12 @@ class wrapper:
             return
         list1_init=PathArray()
         msg=CompletePlan()
-        # list_agent=[]
-        # for k in range(n_agents):
-        #     list_agent.append(list1_init)
-        # msg.agent=list_agent
+        print(solution[0])
+        temp_agent=[]
+
+        for i in range(n_agents):
+            temp_agent.append(PathArray())
+        msg.agent=temp_agent
         for i in range(n_agents):
             n_states=len(solution[i])
             path_agenti=[]
@@ -360,8 +363,10 @@ class wrapper:
                 path_agenti.append(k)
             temp_pathi=PathArray()
             temp_pathi=path_agenti
-            msg.agent.append(temp_pathi)
-        print(msg)
+            msg.agent[i].statei=temp_pathi
+            msg.agent[i].bot_num=self.bot_num[i]
+        # print(msg)
+        self.cbs_plan_pub.publish(msg)
         # Write to output file
         with open(self.args.output, 'r') as output_yaml:
             try:
@@ -379,6 +384,8 @@ class wrapper:
         self.start_y=data.start_y
         self.goal_x=data.goal_x
         self.goal_y=data.goal_y
+        self.bot_num=data.bot_num
+        print('here')
         self.main2()
     
 
