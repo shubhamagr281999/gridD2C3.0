@@ -9,19 +9,21 @@ from std_msgs.msg import Int16
 
 from bot_control.msg import StartGoal, CompletePlan, PathArray, Poses
 from geometry_msgs.msg import Point
+import numpy as np
 
 class goal_publisher:
     def __init__(self):
         self.rate=rospy.Rate(0.5)
-        self.current_pose=[]
-        self.goal_pose=[]
+        self.n_agents=4
+        self.current_pose=np.zeros([self.n_agents,3])
+        self.goal_pose=np.zeros([self.n_agents,3])
         self.time_for_flipping=2
         self.count=[0,0,0,0]
         self.pose_error=[]
         self.theta_error=0.1
         self.paths=[]
         self.turning_points=[]
-        self.n_agents=4
+        
 
         self.pub_goal=rospy.Publisher('/goal_point',Point,queue_size=10)
 
@@ -35,8 +37,8 @@ class goal_publisher:
         self.plans_callback=rospy.Subscriber("/cbs/plan",CompletePlan,self.plan_callback,queue_size=1)
     def plan_callback(self,msg):
         self.paths=[]
-        n_agents=len(msg.agent)
-        for i in range(n_agents):
+        new_plan=len(msg.agent)
+        for i in range(new_plan):
             n_states=len(msg.agent[i].statei)
             xi=[]
             yi=[]
