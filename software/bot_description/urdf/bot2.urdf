@@ -56,13 +56,13 @@
     <collision>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://bot_description/meshes/bot1.dae" scale="1.25 1.25 1.25"/>
+        <mesh filename="package://bot_description/meshes/bot2.dae" scale="1.25 1.25 1.25"/>
       </geometry>
     </collision>
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://bot_description/meshes/bot1.dae" scale="1.25 1.25 1.25"/>
+        <mesh filename="package://bot_description/meshes/bot2.dae" scale="1.25 1.25 1.25"/>
       </geometry>
     </visual>
   </link>

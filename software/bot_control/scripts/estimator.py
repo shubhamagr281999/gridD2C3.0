@@ -67,10 +67,10 @@ class pose_publisher:
         arucoParams = cv2.aruco.DetectorParameters_create()
         #now starting to localise bot wrt to the ids
         # Tranform image properly here
-        img=img[80:700,80:700]
-        img1=img1[80:700,80:700]
+        img=img[70:710,70:710]
+        img1=img1[70:710,70:710]
         # resize tranformed image to 4 time orginal size
-        img=cv2.resize(img,(2480,2480))
+        img=cv2.resize(img,(2560,2560))
         (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
         for i in range(self.n_agents):            
             a=np.where(ids==(i+1)*10)
@@ -85,13 +85,13 @@ class pose_publisher:
                 cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                 # print(cX,cY)
                 img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)            
-                self.change_pose(i,cY/4,cX/4,self.angle((bottomRight[1]- bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
+                self.change_pose(i,cY/4,cX/4,self.angle((-1*bottomRight[1]+bottomLeft[1]),(-1*bottomRight[0]+ bottomLeft[0])))
                 img1=cv2.circle(img1,(int(self.current_pose[i][0]),int(self.current_pose[i][1])),10,(250-i*int(200/self.n_agents),10+i*int(200/self.n_agents),30+i*int(200/self.n_agents)),-1)
         
         # cv2.imshow('original_image', img)
         # cv2.waitKey(1)
-        cv2.imshow('processed_image',img1)
-        cv2.waitKey(1)
+        # cv2.imshow('processed_image',img1)
+        # cv2.waitKey(1)
         # cv2.imwrite('arena.png',img1)
         for i in range(self.n_agents):
             self.poses.posei[i].x=self.current_pose[i][0]

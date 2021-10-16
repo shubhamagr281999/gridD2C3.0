@@ -35,29 +35,29 @@
         -x 0 -y 0 -z 0" />
     </group>
 
-    <group ns="bot1">
+    <group ns="bot0">
         <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
-        -param /robot_description1 -model bot1 -robot_namespace bot1 
-        -x 0.6858 -y 0.2286 -z 0.12 -Y $(arg world_init_heading)" />
+        -param /robot_description1 -model bot0 -robot_namespace bot0 
+        -x 0.23514 -y 0.976020 -z 0.12 -Y $(arg world_init_heading)" />
+    </group>
+
+  <!--   <group ns="bot1">
+        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
+        -param /robot_description2 -model bot1 -robot_namespace bot1 
+        -x 0.07858 -y 0.972971 -z 0.12 -Y $(arg world_init_heading)" />
     </group>
 
     <group ns="bot2">
         <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
-        -param /robot_description2 -model bot2 -robot_namespace bot2 
-        -x 0.6858 -y 0.0762 -z 0.12 -Y $(arg world_init_heading)" />
+        -param /robot_description3 -model bot2 -robot_namespace bot2 
+        -x 0.389051 -y -0.844091 -z 0.12 -Y $(arg world_init_heading)" />
     </group>
 
     <group ns="bot3">
         <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
-        -param /robot_description3 -model bot3 -robot_namespace bot3 
-        -x 0.6858 -y -0.0762 -z 0.12 -Y $(arg world_init_heading)" />
-    </group>
-
-    <group ns="bot4">
-        <node  name="urdf_spawner" pkg="gazebo_ros" type="spawn_model" args="-urdf 
-        -param /robot_description4 -model bot4 -robot_namespace bot4 
-        -x 0.6858 -y -0.2286 -z 0.12 -Y $(arg world_init_heading)" />
-    </group>
+        -param /robot_description4 -model bot3 -robot_namespace bot3 
+        -x 0.9890 -y -0.07586 -z 0.12 -Y $(arg world_init_heading)" />
+    </group> -->
 <!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
 
 <!-- loading pose estimator/odom -->

@@ -338,7 +338,7 @@ class wrapper:
         for i in range(n_agents):
             agents.append([self.bot_num[i],[self.start_x[i],self.start_y[i]],[self.goal_x[i],self.goal_y[i]]])
         env = Environment(dimension, agents, obstacles)
-        print(agents)
+        # print(agents)
         # Searching
         cbs = CBS(env)
         solution = cbs.search()
@@ -347,7 +347,7 @@ class wrapper:
             return
         list1_init=PathArray()
         msg=CompletePlan()
-        print(solution[0])
+        # print(solution)
         temp_agent=[]
 
         for i in range(n_agents):
