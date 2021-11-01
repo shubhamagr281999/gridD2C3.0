@@ -13,27 +13,27 @@ import numpy as np
 class PID:
     def __init__(self):
         # defining tunable params
-        self.kp_lin = 0.8/1000
+        self.kp_lin = 0.1/100
         self.ki_lin = 0.0
         self.kd_lin = 0.0
 
-        self.kp_angle = -75.0/80.0
+        self.kp_angle = -35.0/100.0
         self.ki_angle = 0.0
-        self.kd_angle = -25.0/80.0
+        self.kd_angle = -11.0/100.0
 
-        self.kp_angle_soft = -40.0/80.0
+        self.kp_angle_soft = -20.0/80.0
         self.ki_angle_soft = 0.0/10.0
-        self.kd_angle_soft = -20.0/80.0
+        self.kd_angle_soft = -10.0/80.0
 
-        self.max_vel_lin=5.0/10.0
-        self.max_vel_ang=5/10.0
+        self.max_vel_lin=10.0/10.0
+        self.max_vel_ang=1.1
         self.lin_threshold=5
-        self.dist_large_error=10
+        self.dist_large_error=20
         self.yaw_threshold=0.1
         self.yaw_large_error=0.7
         self.intergral_windup_yaw=20
         self.intergral_windup_lin=15
-        self.control_rate=rospy.Rate(10)
+        self.control_rate=rospy.Rate(30)
 
         #other valribales from here
         self.n_agents=4
@@ -48,7 +48,8 @@ class PID:
         # self.cmd_pub=[self.control_input_pub0,self.control_input_pub1,self.control_input_pub2,self.control_input_pub3]
         self.current_pose=np.zeros([self.n_agents,3])
         self.goal_pose=np.zeros([self.n_agents,3])
-
+        self.goal_pose[0][0]=42.428
+        self.goal_pose[0][1]=299.57
 
         self.current_state_sub=rospy.Subscriber('/poses', Poses,self.current_state_callback,queue_size=10)
         self.goal_pose_sub=rospy.Subscriber('/goal_point', Point,self.goal_pose_callback,queue_size=10)
@@ -62,7 +63,7 @@ class PID:
         self.sumError = np.zeros(self.n_agents)
         self.lastTime = np.zeros(self.n_agents)
         self.last = np.zeros(self.n_agents)
-        sleep(10)
+        sleep(2)
     def current_state_callback(self,msg):
         for i in range(self.n_agents):
             self.current_pose[i][0]=msg.posei[i].x
@@ -123,17 +124,18 @@ class PID:
         return diff_yaw
 
     def pid(self):
-        sleep(5)
+        # sleep(1)
         while not rospy.is_shutdown():
             for i in range(1):                
                 path_angle=self.angle((self.goal_pose[i][1]-self.current_pose[i][1]),(self.goal_pose[i][0]-self.current_pose[i][0]))
                 goal_distance=sqrt((self.current_pose[i][0]-self.goal_pose[i][0])**2+(self.current_pose[i][1]-self.goal_pose[i][1])**2)
                 diff_yaw=self.correct_diff_yaw(path_angle-self.current_pose[i][2])
                 print("-----------------------------")
+                print(self.goal_pose[i])
                 #aligining towards the path
                 self.resetValues(i)
                 condition1=((abs(diff_yaw)>self.yaw_threshold and self.v_x_output[i]==0) or abs(diff_yaw)>self.yaw_large_error) and goal_distance>self.dist_large_error        
-                print(condition1)
+                # print(condition1)
                 if (condition1):
                     self.w_output[i]=self.kp_angle*(diff_yaw)+self.kd_angle*(diff_yaw-self.lastError[i])+self.ki_angle*(self.sumError[i])
                     self.lastError[i]=diff_yaw

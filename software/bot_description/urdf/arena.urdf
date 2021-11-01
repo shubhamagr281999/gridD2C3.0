@@ -107,4 +107,478 @@
     </sensor>
   </gazebo>
 
+  <!-- external walls -->
+  <link name="wall1_x">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 2.1336 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 2.1336 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="wall2_x">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 2.1336 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 2.1336 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="wall1_y">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="2.1336 0.01 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="2.1336 0.01 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="wall2_y">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="2.1336 0.01 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="2.1336 0.01 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="wall1_x_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="1.0668 0 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall1_x"/>
+  </joint>
+
+  <joint name="wal2_x_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="-1.0668 0 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall2_x"/>
+  </joint>
+
+  <joint name="wall1_y_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="0 1.0668 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall1_y"/>
+  </joint>
+
+  <joint name="wall2_y_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="0 -1.0668 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall2_y"/>
+  </joint>
+
+  <!-- internal walls x-->
+  <link name="wall1_x1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+    <collision name='far'>
+      <origin rpy="0 0 0" xyz="-0.6096 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far'>
+      <origin rpy="0 0 0" xyz="-0.6096 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far2'>
+      <origin rpy="0 0 0" xyz="-0.9144 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far2'>
+      <origin rpy="0 0 0" xyz="-0.9144 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+
+    <collision name='farx'>
+      <origin rpy="0 0 0" xyz="0 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='farx'>
+      <origin rpy="0 0 0" xyz="0 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far2x'>
+      <origin rpy="0 0 0" xyz="0 -0.6093 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far2x'>
+      <origin rpy="0 0 0" xyz="0 -0.6093 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+
+    <collision name='far3'>
+      <origin rpy="0 0 0" xyz="-0.6096 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far3'>
+      <origin rpy="0 0 0" xyz="-0.6096 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far4'>
+      <origin rpy="0 0 0" xyz="-0.9144 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far4'>
+      <origin rpy="0 0 0" xyz="-0.9144 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far6'>
+      <origin rpy="0 0 0" xyz="-0.6096 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far6'>
+      <origin rpy="0 0 0" xyz="-0.6096 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far7'>
+      <origin rpy="0 0 0" xyz="-0.9144 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far7'>
+      <origin rpy="0 0 0" xyz="-0.9144 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="wall2_x1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far'>
+      <origin rpy="0 0 0" xyz="0.6096 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far'>
+      <origin rpy="0 0 0" xyz="0.6096 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far1'>
+      <origin rpy="0 0 0" xyz="0.9144 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far1'>
+      <origin rpy="0 0 0" xyz="0.9144 0 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far3'>
+      <origin rpy="0 0 0" xyz="0.6096 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far3'>
+      <origin rpy="0 0 0" xyz="0.6096 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far4'>
+      <origin rpy="0 0 0" xyz="0.9144 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far4'>
+      <origin rpy="0 0 0" xyz="0.9144 0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far6'>
+      <origin rpy="0 0 0" xyz="0.6096 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far6'>
+      <origin rpy="0 0 0" xyz="0.6096 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name='far7'>
+      <origin rpy="0 0 0" xyz="0.9144 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </collision>
+    <visual name='far7'>
+      <origin rpy="0 0 0" xyz="0.9144 -0.6096 0"/>
+      <geometry>
+        <box size="0.01 0.3048 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+
+<!-- internal walls y -->
+  <link name="wall1_y1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name ="far">
+      <origin rpy="0 0 0" xyz="0 -0.6096 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual name="far">
+      <origin rpy="0 0 0" xyz="0 -0.6096 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name ="far2">
+      <origin rpy="0 0 0" xyz="0 -0.9144 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual name="far2">
+      <origin rpy="0 0 0" xyz="0 -0.9144 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+  <link name="wall2_y1">
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 20"/>
+      <mass value="1"/>
+      <inertia ixx="0.00120533333333" ixy="0" ixz="0" iyy="0.00120533333333" iyz="0" izz="0.0024"/>
+    </inertial>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+    <collision name ="far">
+      <origin rpy="0 0 0" xyz="0 0.6096 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual name="far">
+      <origin rpy="0 0 0" xyz="0 0.6096 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name ="far2">
+      <origin rpy="0 0 0" xyz="0 0.9144 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual name="far2">
+      <origin rpy="0 0 0" xyz="0 0.9144 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+
+  <collision name ="farxx">
+      <origin rpy="0 0 0" xyz="0.6096 0 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual name="farxx">
+      <origin rpy="0 0 0" xyz="0.6096 0 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+
+    <collision name ="far2x">
+      <origin rpy="0 0 0" xyz="-0.6096 0 0"/>
+      <geometry>
+        <box size="0.3048 0.001 0.0254" />
+      </geometry>
+    </collision>
+    <visual name="far2x">
+      <origin rpy="0 0 0" xyz="-0.6096 0 0"/>
+      <geometry>
+        <box size="0.3048 0.01 0.0254" />
+      </geometry>
+    </visual>
+  </link>
+
+  <joint name="wall1_x1_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="0.1524 0 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall1_x1"/>
+  </joint>
+
+  <joint name="wal2_x1_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="-0.1524 0 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall2_x1"/>
+  </joint>
+
+  <joint name="wall1_y1_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="0 0.1524 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall1_y1"/>
+  </joint>
+
+  <joint name="wall2_y1_joint" type="fixed">
+    <axis xyz="0 1 0" />
+    <origin xyz="0 -0.1524 0.0127" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="wall2_y1"/>
+  </joint> 
+
 </robot>

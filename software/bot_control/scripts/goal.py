@@ -15,7 +15,7 @@ import numpy as np
 class goal_publisher:
     def __init__(self):
         self.rate=rospy.Rate(0.5)
-        self.n_agents=4
+        self.n_agents=1
         self.current_pose=np.zeros([self.n_agents,3])
         self.goal_pose=np.zeros([self.n_agents,3])
         self.time_for_flipping=2
@@ -36,8 +36,6 @@ class goal_publisher:
 
         self.poses_sub=rospy.Subscriber('/poses',Poses,self.pose_callback,queue_size=10)
         self.plans_callback=rospy.Subscriber("/cbs/plan",CompletePlan,self.plan_callback,queue_size=1)
-        time.sleep(1)
-        self.goal_pose=self.current_pose
     def empty_list(self,i):
         k=[]
         for j in range(i):
@@ -109,13 +107,12 @@ class goal_publisher:
                     # print(goal_distance)
                     if(goal_distance<self.lin_threshold):
                         self.goal_pose[i][0]=self.turning_points[i][0][0]*(600.0/14.0)+(21+600.0/28)
-                        self.goal_pose[i][0]=self.turning_points[i][0][1]*(600.0/14.0)+(21+600.0/28)
-                        self.turning_points[i].pop(0)
+                        self.goal_pose[i][1]=self.turning_points[i][0][1]*(600.0/14.0)+(21+600.0/28)
+                        # print(self.turning_points[i].pop(0))
                         self.goal_pub(i)
-                        print("sending new goal")
+                        # print("sending new goal:", self.goal_pose[i])
                 else:
                     print('bot ',i," needs new plan")
-
             self.rate.sleep()  
 
 if __name__ == '__main__':

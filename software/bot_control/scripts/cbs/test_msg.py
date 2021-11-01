@@ -3,6 +3,7 @@
 import rospy
 import time
 from bot_control.msg import StartGoal
+
 # from drdo_exploration.msg import teleopData
 class pose_publisher:
     def __init__(self):
@@ -13,10 +14,18 @@ class pose_publisher:
         self.data.goal_x=[2,0,5,0]
         self.data.goal_y=[4,2,2,7]
         self.data.bot_num=[0,1,2,3]
-        print(self.data)
+
+        self.data.start_x=[0]
+        self.data.start_y=[6]
+        self.data.goal_x=[2]
+        self.data.goal_y=[4]
+        self.data.bot_num=[0]
+
+        # print(self.data)
         while not rospy.is_shutdown(): 
-            time.sleep(10) 
             self.pub_test.publish(self.data)
+            print("publihsed to cbs")
+            time.sleep(2)
 
 
 if __name__ == '__main__':

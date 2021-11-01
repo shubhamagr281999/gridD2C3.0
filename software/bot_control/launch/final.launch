@@ -61,7 +61,10 @@
 <!-- xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx -->
 
 <!-- loading pose estimator/odom -->
-<!-- <node pkg="bot_control" type="estimator.py" name="pose_estimator" output="screen"/> -->
+<node pkg="bot_control" type="estimator.py" name="pose_estimator" output="screen"/>
+<node pkg="bot_control" type="goal.py" name="gaol_publisher" output="screen"/>
+<node pkg='bot_control' type='pid_control.py'   name='pd_controller' output="screen" />
+<!-- <node pkg="bot_control" type="test_msg.py" name="inti_publisher" output="screen"/> -->
 
 <!-- controller node -->
 <!-- <node pkg="bot_control" type="pid_control_bot1.py" name="controller_node_bot1" output="screen"/> -->
