@@ -126,7 +126,7 @@ class PID:
     def pid(self):
         # sleep(1)
         while not rospy.is_shutdown():
-            for i in range(1):                
+            for i in range(1):          #1 should be replaced with self.n_agents      
                 path_angle=self.angle((self.goal_pose[i][1]-self.current_pose[i][1]),(self.goal_pose[i][0]-self.current_pose[i][0]))
                 goal_distance=sqrt((self.current_pose[i][0]-self.goal_pose[i][0])**2+(self.current_pose[i][1]-self.goal_pose[i][1])**2)
                 diff_yaw=self.correct_diff_yaw(path_angle-self.current_pose[i][2])
