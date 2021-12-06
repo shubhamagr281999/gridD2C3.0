@@ -8,7 +8,7 @@ import numpy as np
 from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Point
 from bot_control.msg import Poses
-from drdo_exploration.msg import teleopData
+
 class pose_publisher:
     def __init__(self):
         self.n_agents=4
