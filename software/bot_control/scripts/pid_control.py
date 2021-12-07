@@ -57,12 +57,11 @@ class PID:
 
         self.v_x_output=np.zeros(self.n_agents)
         self.w_output=np.zeros(self.n_agents)
-        self.start = rospy.Time.now().to_nsec()
-        self.lastError = np.zeros(self.n_agents)
+        self.lastError_dist = np.zeros(self.n_agents)
+        self.lastError_angle = np.zeros(self.n_agents)
         self.lastError_small=np.zeros(self.n_agents)
-        self.sumError = np.zeros(self.n_agents)
-        self.lastTime = np.zeros(self.n_agents)
-        self.last = np.zeros(self.n_agents)
+        self.sumError_dist = np.zeros(self.n_agents)
+        self.sumError_angle = np.zeros(self.n_agents)
         sleep(2)
     def current_state_callback(self,msg):
         for i in range(self.n_agents):
@@ -101,10 +100,12 @@ class PID:
         # print(msg_pub.linear.x,msg_pub.angular.z)
 
     def resetValues(self,i):
-        self.lastError[i] = 0
+        self.lastError_dist[i] = 0
+        self.lastError_angle[i] = 0
         self.lastError_small[i]=0
-        self.sumError[i] = 0
-        self.lastTime[i] = 0
+        self.sumError_dist[i] = 0
+        self.sumError_angle[i] = 0
+        
 
     def angle(self,y,x):
         if(x>0 and y>0):
@@ -130,33 +131,34 @@ class PID:
                 path_angle=self.angle((self.goal_pose[i][1]-self.current_pose[i][1]),(self.goal_pose[i][0]-self.current_pose[i][0]))
                 goal_distance=sqrt((self.current_pose[i][0]-self.goal_pose[i][0])**2+(self.current_pose[i][1]-self.goal_pose[i][1])**2)
                 diff_yaw=self.correct_diff_yaw(path_angle-self.current_pose[i][2])
-                print("-----------------------------")
-                print(self.goal_pose[i])
+                # print("-----------------------------")
+                # print(self.goal_pose[i])
+
                 #aligining towards the path
-                self.resetValues(i)
-                condition1=((abs(diff_yaw)>self.yaw_threshold and self.v_x_output[i]==0) or abs(diff_yaw)>self.yaw_large_error) and goal_distance>self.dist_large_error        
+                condition1=((abs(diff_yaw)>self.yaw_threshold and self.v_x_output[i]==0) or abs(diff_yaw)>self.yaw_large_error)        
                 # print(condition1)
                 if (condition1):
-                    self.w_output[i]=self.kp_angle*(diff_yaw)+self.kd_angle*(diff_yaw-self.lastError[i])+self.ki_angle*(self.sumError[i])
-                    self.lastError[i]=diff_yaw
-                    if(abs(self.sumError[i]+diff_yaw)<self.intergral_windup_yaw):
-                        self.sumError[i]=self.sumError[i]+diff_yaw
+                    self.w_output[i]=self.kp_angle*(diff_yaw)+self.kd_angle*(diff_yaw-self.lastError_angle[i])+self.ki_angle*(self.sumError_angle[i])
+                    self.lastError_angle[i]=diff_yaw
+                    if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
+                        self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
                     # print(diff_yaw,path_angle,self.current_pose[i][2])
+
                 #moving towards goal        
-                self.resetValues(i)
                 condition2= goal_distance>self.lin_threshold and (not condition1)
                 if (condition2):
-                    self.v_x_output[i]=self.kp_lin*(goal_distance)+self.kd_lin*(goal_distance-self.lastError[i])+self.ki_lin*self.sumError[i]
+                    self.v_x_output[i]=self.kp_lin*(goal_distance)+self.kd_lin*(goal_distance-self.lastError_dist[i])+self.ki_lin*self.sumError_dist[i]
                     self.w_output[i]=self.kp_angle_soft*(diff_yaw)+self.kd_angle_soft*(diff_yaw-self.lastError_small[i])
-                    self.lastError[i]=goal_distance
+                    self.lastError_dist[i]=goal_distance
                     self.lastError_small[i]=diff_yaw
-                    if(abs(self.sumError[i]+goal_distance)<self.intergral_windup_lin):
-                        self.sumError[i]=self.sumError[i]+goal_distance
-                self.resetValues(i)
+                    if(abs(self.sumError_dist[i]+goal_distance)<self.intergral_windup_lin):
+                        self.sumError_dist[i]=self.sumError_dist[i]+goal_distance
+            
                 if( (not condition1) and (not condition2)):
                     self.v_x_output[i]=0
                     self.w_output[i]=0
-                print("dist:",goal_distance," | yaw:",diff_yaw, " | v:",self.v_x_output[i]," | w:",self.w_output[i])
+                    self.resetValues(i)
+                # print("dist:",goal_distance," | yaw:",diff_yaw, " | v:",self.v_x_output[i]," | w:",self.w_output[i])
             
             self.twist_msg()
             # print('hey there')
