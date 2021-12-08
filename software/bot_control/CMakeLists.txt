@@ -55,6 +55,8 @@ add_message_files(
   PathArray.msg
   CompletePlan.msg
   Poses.msg
+  pkg_flag.msg
+  dest_id.msg
 )
 
 ## Generate services in the 'srv' folder
