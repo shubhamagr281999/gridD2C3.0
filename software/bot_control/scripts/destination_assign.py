@@ -4,7 +4,7 @@ from bot_control.msg import dest_id, pkg_flag
 
 class destination_assign:
     def __init__(self):
-        self.dicti = {0: 'Kolkata', 1: 'Ahmedabad', 2: 'Pune', 3: 'Bengaluru', 4: 'Mumbai', 5: 'Delhi', 6: 'Chennai', 7: 'Jaipur', 8: 'Hyderabad'}
+        self.dicti = {0: 'Mumbai', 1: 'Delhi', 2: 'Kolkata', 3: 'Chennai', 4: 'Bengaluru', 5: 'Hyderabad', 6: 'Pune', 7: 'Ahmedabad', 8: 'Jaipur'}
         self.key_list = list(self.dicti.keys())
         self.val_list = list(self.dicti.values())
         self.data = pd.read_excel (r'~/catkin_ws/src/gridD2C3.0/Sample Data.xls')
