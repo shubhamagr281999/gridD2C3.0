@@ -24,13 +24,15 @@ class start_goal_publisher:
         self.x0 = 0 #change according to camera for setting up the arena
         self.y0 = 0 #change according to camera for setting up the arena
         self.grid_locations = self.grid_location_assigner()  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
-        print(self.grid_locations)
+        # print(self.grid_locations)
+
+    #Mumbai's center is treated as origin and down the screen is +ve x-axis and left to right of screen is +ve y-axis
     def grid_location_assigner(self):
         k = []
         for i in range(9):
             a = []
-            x=(i/3)*4
-            y=(i%3)*4
+            x=x0 + (i/3)*4
+            y=y0 + (i%3)*4
             for j in range(4):
                 if j < 2:
                     a.append([x + ((-1)**j)*0.5,y-1.5])
