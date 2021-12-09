@@ -42,15 +42,15 @@ class start_goal_publisher:
         return k
 
 
-    def dest_callback(self,msg,bot_num):
+    def dest_callback(self,msg):
             for i in range(4):
-                if self.delivery_zone_occupancy[self.msg.bot_num][i]==-1:
-                    self.delivery_zone_occupancy[self.msg.bot_num][i] = bot_num
-                    self.startgoal.bot_num.data = self.msg.bot_num
-                    # self.startgoal.start_x.data = self.
-                    # self.startgoal.start_y.data = self.
-                    # self.startgoal.goal_x.data = self.
-                    # self.startgoal.goal_x.data = self.
+                if self.delivery_zone_occupancy[msg.bot_num.data][i]==-1:
+                    self.delivery_zone_occupancy[msg.bot_num.data][i] = msg.bot_num.data
+                    self.startgoal.bot_num.data = [msg.bot_num.data]
+                    self.startgoal.start_x.data = [self.current_pose[msg.bot_num.data][0]]
+                    self.startgoal.start_y.data = [self.current_pose[msg.bot_num.data][1]]
+                    self.startgoal.goal_x.data = [self.grid_locations[msg.dest_id.data][i][0]]
+                    self.startgoal.goal_x.data = [self.grid_locations[msg.dest_id.data][i][1]]
                     dest_pub.publish(self.startgoal)
                     break
 

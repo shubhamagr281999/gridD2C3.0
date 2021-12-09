@@ -28,12 +28,14 @@ class destination_assign:
     def assign(self,msg):
         if msg.LS.data == 1:
             self.dest_id_msg.LS.data = 1
+            self.dest_id_msg.bot_num.data = msg.bot_num.data
             self.dest_id_msg.dest_id.data = self.key_list[self.val_list.index(self.induct1[0])]
             self.induct1.pop(0)
             self.pub_destination.publish(self.dest_id_msg)
             # print(self.induct1)
         elif msg.LS.data == 2:
             self.dest_id_msg.LS.data = 2
+            self.dest_id_msg.bot_num.data = msg.bot_num.data
             self.dest_id_msg.dest_id.data = self.key_list[self.val_list.index(self.induct2[0])]
             self.induct2.pop(0)
             self.pub_destination.publish(self.dest_id_msg)
