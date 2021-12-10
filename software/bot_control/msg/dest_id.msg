@@ -1,3 +1,3 @@
-std_msgs/Int16 bot_num
-std_msgs/Int16 LS
-std_msgs/Int16 dest_id
+int16 bot_num
+int16 LS
+int16 dest_id
