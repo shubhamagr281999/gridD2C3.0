@@ -10,7 +10,7 @@ from itertools import combinations
 from copy import deepcopy
 from bot_control.msg import StartGoal, CompletePlan, PathArray
 from geometry_msgs.msg import Point
-from cbs.a_star import AStar
+from a_star import AStar
 
 import numpy as np
 
@@ -24,23 +24,25 @@ class Location(object):
         return str((self.x, self.y))
 
 class State(object):
-    def __init__(self, time, location):
+    def __init__(self, time, location, direction):
         self.time = time
         self.location = location
+        self.direction = direction
     def __eq__(self, other):
-        return self.time == other.time and self.location == other.location
+        return abs(self.time - other.time)<=1 and self.location == other.location
     def __hash__(self):
         return hash(str(self.time)+str(self.location.x) + str(self.location.y))
     def is_equal_except_time(self, state):
         return self.location == state.location
     def __str__(self):
-        return str((self.time, self.location.x, self.location.y))
+        return str((self.time, self.location.x, self.location.y, self.direction))
 
 class Conflict(object):
     VERTEX = 1
     EDGE = 2
     def __init__(self):
-        self.time = -1
+        self.time_1 = -1
+        self.time_2 = -1
         self.type = -1
 
         self.agent_1 = ''
@@ -50,7 +52,7 @@ class Conflict(object):
         self.location_2 = Location()
 
     def __str__(self):
-        return '(' + str(self.time) + ', ' + self.agent_1 + ', ' + self.agent_2 + \
+        return '(' + str(self.time_1) + ', ' + str(self.time_2) + ', ' + self.agent_1 + ', ' + self.agent_2 + \
              ', '+ str(self.location_1) + ', ' + str(self.location_2) + ')'
 
 class VertexConstraint(object):
@@ -108,69 +110,100 @@ class Environment(object):
 
     def get_neighbors(self, state):    # this needs lot of modification
         neighbors = []
-        tt=1
-        tt1=1
+
         # Wait action
-        n = State(state.time + tt1, state.location)
+        # Up action
+        if state.direction == 0:
+            n = State(state.time + 1, Location(state.location.x, state.location.y+1), 0)
+            if self.state_valid(n) and self.transition_valid(state, n):
+                neighbors.append(n)
+        # Down action
+        if state.direction == 2:
+            n = State(state.time + 1, Location(state.location.x, state.location.y-1), 2)
+            if self.state_valid(n) and self.transition_valid(state, n):
+                neighbors.append(n)
+        # Left action
+        if state.direction == 3:
+            n = State(state.time + 1, Location(state.location.x-1, state.location.y), 3)
+            if self.state_valid(n) and self.transition_valid(state, n):
+                neighbors.append(n)
+        # Right action
+        if state.direction == 1:
+            n = State(state.time + 1, Location(state.location.x+1, state.location.y), 1)
+            if self.state_valid(n) and self.transition_valid(state, n):
+                neighbors.append(n)
+
+        n = State(state.time + 1, state.location, state.direction)
         if self.state_valid(n):
             neighbors.append(n)
-        # Up action
-        n = State(state.time + tt, Location(state.location.x, state.location.y+1))
-        if self.state_valid(n) and self.transition_valid(state, n):
+            n = State(state.time + 3, state.location, (state.direction+1)%4)
+            # neighbors.append(n)
+            # n = State(state.time + 2, state.location, (state.direction+2)%4)
             neighbors.append(n)
-        # Down action
-        n = State(state.time + tt, Location(state.location.x, state.location.y-1))
-        if self.state_valid(n) and self.transition_valid(state, n):
+            n = State(state.time + 3, state.location, (state.direction+3)%4)
             neighbors.append(n)
-        # Left action
-        n = State(state.time + tt, Location(state.location.x-1, state.location.y))
-        if self.state_valid(n) and self.transition_valid(state, n):
-            neighbors.append(n)
-        # Right action
-        n = State(state.time + tt, Location(state.location.x+1, state.location.y))
-        if self.state_valid(n) and self.transition_valid(state, n):
-            neighbors.append(n)
+        
         return neighbors
 
 
     def get_first_conflict(self, solution):
-        max_t = max([len(plan) for plan in solution.values()])
         result = Conflict()
-        for t in range(max_t):
-            for agent_1, agent_2 in combinations(solution.keys(), 2):
-                state_1 = self.get_state(agent_1, solution, t)
-                state_2 = self.get_state(agent_2, solution, t)
-                if state_1.is_equal_except_time(state_2):
-                    result.time = t
-                    result.type = Conflict.VERTEX
-                    result.location_1 = state_1.location
-                    result.agent_1 = agent_1
-                    result.agent_2 = agent_2
-                    return result
+        i = 0
+        for agent_1, agent_2 in combinations(solution.keys(), 2):
+            for i in range(len(solution[agent_1])):
+                state_1 = self.get_state(agent_1, solution, i)
+                for j in range(len(solution[agent_2])):
+                    state_2 = self.get_state(agent_2, solution, j)
+                    if state_1 == state_2:
+                        result.time_1 = state_2.time
+                        result.time_2 = state_2.time
+                        result.type = Conflict.VERTEX
+                        result.location_1 = state_1.location
+                        result.agent_1 = agent_1
+                        result.agent_2 = agent_2
+                        return result
+                    if state_1.is_equal_except_time(state_2) and state_1.time > state_2.time:
+                        state_2a = self.get_state(agent_2, solution, j+1)
+                        if state_1.is_equal_except_time(state_2a) and state_1.time < state_2a.time:
+                            result.time_1 = state_2.time
+                            result.time_2 = state_2a.time
+                            result.type = Conflict.VERTEX
+                            result.location_1 = state_1.location
+                            result.agent_1 = agent_1
+                            result.agent_2 = agent_2
+                            return result
+            for i in range(len(solution[agent_2])):
+                state_1 = self.get_state(agent_2, solution, i)
+                for j in range(len(solution[agent_1])):
+                    state_2 = self.get_state(agent_1, solution, j)
+                    if state_1 == state_2:
+                        result.time_1 = state_2.time
+                        result.time_2 = state_2.time
+                        result.type = Conflict.VERTEX
+                        result.location_1 = state_1.location
+                        result.agent_1 = agent_1
+                        result.agent_2 = agent_2
+                        return result
+                    if state_1.is_equal_except_time(state_2) and state_1.time > state_2.time:
+                        state_2a = self.get_state(agent_1, solution, j+1)
+                        if state_1.is_equal_except_time(state_2a) and state_1.time < state_2a.time:
+                            result.time_1 = state_2.time
+                            result.time_2 = state_2a.time
+                            result.type = Conflict.VERTEX
+                            result.location_1 = state_1.location
+                            result.agent_1 = agent_1
+                            result.agent_2 = agent_2
+                            return result
 
-            for agent_1, agent_2 in combinations(solution.keys(), 2):
-                state_1a = self.get_state(agent_1, solution, t)
-                state_1b = self.get_state(agent_1, solution, t+1)
-
-                state_2a = self.get_state(agent_2, solution, t)
-                state_2b = self.get_state(agent_2, solution, t+1)
-
-                if state_1a.is_equal_except_time(state_2b) and state_1b.is_equal_except_time(state_2a):
-                    result.time = t
-                    result.type = Conflict.EDGE
-                    result.agent_1 = agent_1
-                    result.agent_2 = agent_2
-                    result.location_1 = state_1a.location
-                    result.location_2 = state_1b.location
-                    return result
         return False
 
     def create_constraints_from_conflict(self, conflict):
         constraint_dict = {}
         if conflict.type == Conflict.VERTEX:
-            v_constraint = VertexConstraint(conflict.time, conflict.location_1)
             constraint = Constraints()
-            constraint.vertex_constraints |= {v_constraint}
+            for i in range(conflict.time_1-1, conflict.time_2+2):
+                v_constraint = VertexConstraint(i, conflict.location_1)
+                constraint.vertex_constraints |= {v_constraint}
             constraint_dict[conflict.agent_1] = constraint
             constraint_dict[conflict.agent_2] = constraint
 
@@ -218,8 +251,8 @@ class Environment(object):
 
     def make_agent_dict(self):
         for agent in self.agents:
-            start_state = State(0, Location(agent[1][0], agent[1][1]))
-            goal_state = State(0, Location(agent[2][0], agent[2][1]))
+            start_state = State(0, Location(agent[1][0], agent[1][1]), agent[1][2])
+            goal_state = State(0, Location(agent[2][0], agent[2][1]), agent[2][2])
 
             self.agent_dict.update({agent[0]:{'start':start_state, 'goal':goal_state}})
 
@@ -303,7 +336,7 @@ class CBS(object):
     def generate_plan(self, solution):
         plan = {}
         for agent, path in solution.items():
-            path_dict_list = [{'t':state.time, 'x':state.location.x, 'y':state.location.y} for state in path]
+            path_dict_list = [{'t':state.time, 'x':state.location.x, 'y':state.location.y, 'd': str(state.direction)} for state in path]
             # print(path_dict_list)
             plan[agent] = path_dict_list
         # print(len(plan['agent1']))
@@ -316,8 +349,10 @@ class wrapper:
         self.cbs_plan_pub=rospy.Publisher("/cbs/plan",CompletePlan,queue_size=1)
         self.start_x=[]
         self.start_y=[]
+        self.start_d=[]
         self.goal_x=[]
         self.goal_y=[]
+        self.goal_d=[]
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("param", help="input file containing map and obstacles")
         self.parser.add_argument("output", help="output file with the schedule")
@@ -336,7 +371,7 @@ class wrapper:
         agents = []
         n_agents=len(self.bot_num)
         for i in range(n_agents):
-            agents.append([self.bot_num[i],[self.start_x[i],self.start_y[i]],[self.goal_x[i],self.goal_y[i]]])
+            agents.append([self.bot_num[i],[self.start_x[i],self.start_y[i],self.start_d[i]],[self.goal_x[i],self.goal_y[i],self.goal_d[i]]])
         env = Environment(dimension, agents, obstacles)
         # print(agents)
         # Searching
@@ -382,8 +417,10 @@ class wrapper:
     def start_goal_callback(self,data):
         self.start_x=data.start_x
         self.start_y=data.start_y
+        self.start_d=data.start_d
         self.goal_x=data.goal_x
         self.goal_y=data.goal_y
+        self.goal_d=data.goal_d
         self.bot_num=data.bot_num
         print('here')
         self.main2()

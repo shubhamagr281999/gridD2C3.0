@@ -58,12 +58,12 @@ class Animation:
     for d, i in zip(map["agents"], range(0, len(map["agents"]))):
       self.patches.append(Rectangle((d["goal"][0] - 0.25, d["goal"][1] - 0.25), 0.5, 0.5, facecolor=Colors[0], edgecolor='black', alpha=0.5))
     for d, i in zip(map["agents"], range(0, len(map["agents"]))):
-      name = d["name"]
+      name = str(d["name"])
       self.agents[name] = Circle((d["start"][0], d["start"][1]), 0.3, facecolor=Colors[0], edgecolor='black')
       self.agents[name].original_face_color = Colors[0]
       self.patches.append(self.agents[name])
       self.T = max(self.T, schedule["schedule"][name][-1]["t"])
-      self.agent_names[name] = self.ax.text(d["start"][0], d["start"][1], name.replace('agent', ''))
+      self.agent_names[name] = self.ax.text(d["start"][0], d["start"][1], name)
       self.agent_names[name].set_horizontalalignment('center')
       self.agent_names[name].set_verticalalignment('center')
       self.artists.append(self.agent_names[name])

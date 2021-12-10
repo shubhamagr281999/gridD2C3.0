@@ -16,8 +16,11 @@ class AStar():
     def reconstruct_path(self, came_from, current):
         total_path = [current]
         while current in came_from.keys():
-            current = came_from[current]
-            total_path.append(current)
+            try:
+                current = came_from[current]
+                total_path.append(current)
+            except:
+                break
         return total_path[::-1]
 
     def search(self, agent_name):
@@ -55,7 +58,7 @@ class AStar():
                 if neighbor in closed_set:
                     continue
                 
-                tentative_g_score = g_score.setdefault(current, float("inf")) + step_cost
+                tentative_g_score = g_score.setdefault(current, float("inf")) + (neighbor.time - current.time)
 
                 if neighbor not in open_set:
                     open_set |= {neighbor}
