@@ -1,2 +1,2 @@
-std_msgs/Int16 bot_num
-std_msgs/Int16 LS
+int16 bot_num
+int16 LS
