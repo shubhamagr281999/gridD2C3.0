@@ -134,6 +134,9 @@ class start_goal_publisher:
         msg.z=bot_num
         self.pub_goal.publish(msg)
 
+    def preffered_LS(self, bot_num)
+        Loss_function_LS1 = curre
+
 
 
 if __name__ == '__main__':
