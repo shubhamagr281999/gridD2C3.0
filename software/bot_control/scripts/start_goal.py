@@ -30,6 +30,51 @@ class start_goal_publisher:
         self.task_flag=rospy.Subscriber('/task_flag',Bot_task,self.next_task_callback, queue_size=10)
         self.update_status = rospy.Publisher('/bot_status',Bot_status,queue_size=10)
         self.update_task = rospy.Publisher('/task_flag',Bot_task, queue_size=10)
+        self.grid_locations_LS1= [self.x0+1.5, self.y0- 3.5]
+        self.grid_locations_LS2= [self.x0 +6.5, self.y0 - 3.5]
+
+        self.lossfunction_para1= 1 % weighted loss function-LS selection 
+        self.lossfunction_para2= 1
+
+        self.queue_LS1_actual = np.zeros([6,1])
+        for i in range(6):
+            if (i < (self.n_agents%2)):
+                self.queue_LS1_actual[i][0]= i
+            else:
+                self.queue_LS1_actual[i][0]= 100
+
+        self.queue_LS2_actual = np.zeros([6,1])
+        for i in range(6):
+            if (i < (self.n_agents - (self.n_agents%2))):
+                self.queue_LS2_actual[i][0]= i + self.n_agents
+            else:
+                self.queue_LS2_actual[i][0]= 100
+        
+        #queue_LS1_actual and queue_LS2_actual are updated using estimator NEED A FUNCTION FOR THIS IN ESTIMATOR BLOCK
+
+        self.queue_LS1_pseudo_actual= self.queue_LS1_actual
+        self.queue_LS2_pseudo_actual= self.queue_LS2_actual
+        
+        self.queue_LS1_assigned= np.array([(self.n_agents%2),1])
+
+        for i in range(self.n_agents%2):
+            self.queue_LS1_assigned[i][0]= i
+
+        self.queue_LS2_assigned= np.array([(self.n_agents- (self.n_agents%2)),1])
+
+        for i in range(self.n_agents-(self.n_agents%2)):
+            self.queue_LS2_assigned[i][0]= i + (self.n_agents%2)
+
+        self.LS_assigned = np.array([self.n_agents, 0])
+        for i in range(self.n_agents):
+            if (i< (self.nagents%2)):
+                LS_assigned[i][0]= 1
+            else:
+                LS_assigned[i][0]= 2
+
+
+
+
         
         # print(self.grid_locations)
     def update_status_callback(self,msg):
@@ -48,6 +93,10 @@ class start_goal_publisher:
 
                     self.status_msg.status[i] = 1  #updated the status of the bot
                     self.update_status.publish(self.status_msg)
+
+                    time.sleep()
+
+                  
 
 
                 elif (self.status_msg.status[i] == 1):
@@ -135,8 +184,15 @@ class start_goal_publisher:
         self.pub_goal.publish(msg)
 
     def preffered_LS(self, bot_num)
-        Loss_function_LS1 = curre
-
+        Loss_function_LS1 =lossfunction_para1 * sqrt((current_pose[bot_num][0] - grid_locations_LS1[0])^^2 + (current_pose[bot_num][1] - grid_locations_LS1[1])^^2) 
+        Loss_function_LS2 =lossfunction_para1 * sqrt((current_pose[bot_num][0] - grid_locations_LS2[0])^^2 + (current_pose[bot_num][1] - grid_locations_LS2[1])^^2)
+        if (Loss_function_LS1 > Loss_function_LS2)
+            LS_assigned[bot_num][0]= 2
+            return 2
+        else
+            LS_assigned[bot_num][0]= 1
+            return 1
+        
 
 
 if __name__ == '__main__':
