@@ -58,7 +58,7 @@ class Animation:
     for d, i in zip(map["agents"], range(0, len(map["agents"]))):
       self.patches.append(Rectangle((d["goal"][0] - 0.25, d["goal"][1] - 0.25), 0.5, 0.5, facecolor=Colors[0], edgecolor='black', alpha=0.5))
     for d, i in zip(map["agents"], range(0, len(map["agents"]))):
-      name = str(d["name"])
+      name = d["name"]
       self.agents[name] = Circle((d["start"][0], d["start"][1]), 0.3, facecolor=Colors[0], edgecolor='black')
       self.agents[name].original_face_color = Colors[0]
       self.patches.append(self.agents[name])
