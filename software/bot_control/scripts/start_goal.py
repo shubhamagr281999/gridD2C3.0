@@ -65,12 +65,15 @@ class start_goal_publisher:
         for i in range(self.n_agents-(self.n_agents%2)):
             self.queue_LS2_assigned[i][0]= i + (self.n_agents%2)
 
-        self.LS_assigned = np.array([self.n_agents, 0])
+        self.LS_assigned = np.array([self.n_agents, 1])
         for i in range(self.n_agents):
             if (i< (self.nagents%2)):
-                LS_assigned[i][0]= 1
+                self.LS_assigned[i][0]= 1
             else:
-                LS_assigned[i][0]= 2
+                self.LS_assigned[i][0]= 2
+
+        self.m_LS1= (self.n_agents % 2)
+        self.m_LS2= (self.nagents - (self.n_agents%2))
 
 
 
@@ -94,9 +97,19 @@ class start_goal_publisher:
                     self.status_msg.status[i] = 1  #updated the status of the bot
                     self.update_status.publish(self.status_msg)
 
-                    time.sleep()
+                    time.sleep(5) # TUNE LATER
 
-                  
+                    if (LS_assigned[bot_num][0] == 1):
+                        #PUT A CHECK HERE!! 
+                        self.queue_LS1_assigned = np.delete(self.queue_LS1_assigned, [0])
+                        self.queue_LS1_pseudo_actual= np.delete(self.queue_LS1_pseudo_actual, [0])
+                        
+                    elif (LS_assigned[bot_num][0] == 2):
+                        #PUT A CHECK HERE!!
+                        self.queue_LS2_assigned= np.delete(queue_LS2_assigned, [0])
+                        self.queue_LS2_pseudo_actual= np.delete(self.queue_LS2_pseudo_actual, [0])
+                        
+
 
 
                 elif (self.status_msg.status[i] == 1):
@@ -116,23 +129,73 @@ class start_goal_publisher:
                     self.update_status.publish(self.status_msg)
 
                 elif (self.status_msg.status[i] == 3):
-                    #the bot is waiting for decision on which LS it has to go to
-                    self.task_msg.task[i] = 1    #task has been completed : Alloting LS
+                    #bot is assigned loading station and goes to the side flank of the queue
+                    if (self.preffered_LS(bot_num) == 1):
+                        return [self.x0 + 1.5 - self.queue_LS1_assigned.indexOf(bot_num, 0), self.y0 - 1.5]
+                        #PUBLISH!!
+                    elif (self.preffered_LS(bot_num) == 2):
+                        return [self.x0 + 6.5 + self.queue_LS2_assigned.indexOf(bot_num,0), self.y0 -1.5] 
+                        #PUBLISH!!
+                    # MODIFY THIS PART LATER
+
+                    self.task_msg.task[i] = 1    #task has been completed : reached side flank
                     self.update_task.publish(self.task_msg)
 
                     self.status_msg.status[i] = 4  #updated the status of the bot
                     self.update_status.publish(self.status_msg)
 
                 elif (self.status_msg.status[i] == 4):
-                    #the bot is on the way to the loading station
-                    self.task_msg.task[i] = 1    #task has been completed : PID Control back to LS
+                    #the bot goes to the queue for assigned loading station
+                    self.m_LS1=6
+                    self.m_LS2=6
+                    
+                    while i<6:
+                        if (queue_LS1_pseudo_actual[5-i][0] ==100]:
+                            self.m_LS1 = 5-i
+                        else:
+                            break
+                    
+                    while j<6:
+                        if (queue_LS2_pseudo_actual[5-j][0] ==100]:
+                            self.m_LS2 = 5-j
+                        else:
+                            break
+
+                    if (LS_assigned[bot_num][0] == 1):
+                        self.queue_LS1_pseudo_actual[self.m_LS1][0] = bot_num
+                        return [self.x0 - 6.5 + self.m_LS1,self.y0-2.5]
+                        #PUBLISH
+
+                    elif (LS_assigned[bot_num][0]==2):
+                        self.queue_LS2_pseudo_actual[self.m_LS2][0] = bot_num
+                        return [self.x0 +6.5  + self.m_LS2,self.y0-2.5]
+                        #PUBLISH
+
+
+                    self.task_msg.task[i] = 1    #task has been completed : reached the queue
                     self.update_task.publish(self.task_msg)
 
                     self.status_msg.status[i] = 5  #updated the status of the bot
                     self.update_status.publish(self.status_msg)
 
+
                 elif (self.status_msg.status[i] == 5):
                     #the bot is in the queue at loading station
+
+                    if (self.LS_assigned[bot_num][0]==1):
+
+                        if (self.queue_LS1_actual.indexOf(bot_num, 0) == 0):
+                            #Task done
+                        elif (self.queue_LS1_actual[self.queue_LS1_actual.indexOf(bot_num, 0)-1][0]== 100):
+                            
+                            # move a step forward
+                        else :
+                            #stay and wait
+                
+
+                    elif(self.LS_assigned[bot_num][0]==2):
+
+
                     self.task_msg.task[i] = 1    #task has been completed :Reached the top of queue
                     self.update_task.publish(self.task_msg)
 
@@ -187,11 +250,20 @@ class start_goal_publisher:
         Loss_function_LS1 =lossfunction_para1 * sqrt((current_pose[bot_num][0] - grid_locations_LS1[0])^^2 + (current_pose[bot_num][1] - grid_locations_LS1[1])^^2) 
         Loss_function_LS2 =lossfunction_para1 * sqrt((current_pose[bot_num][0] - grid_locations_LS2[0])^^2 + (current_pose[bot_num][1] - grid_locations_LS2[1])^^2)
         if (Loss_function_LS1 > Loss_function_LS2)
-            LS_assigned[bot_num][0]= 2
+            self.LS_assigned[bot_num][0]= 2
+            numpy.append(self.queue_LS2_assigned, bot_num)
             return 2
         else
-            LS_assigned[bot_num][0]= 1
+            self.LS_assigned[bot_num][0]= 1
+            numpy.append(self.queue_LS1_assigned, bot_num)
             return 1
+
+    
+
+
+    
+
+
         
 
 
