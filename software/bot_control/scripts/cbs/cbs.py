@@ -29,9 +29,10 @@ class State(object):
         self.location = location
         self.direction = direction
     def __eq__(self, other):
-        return abs(self.time - other.time)<=1 and self.location == other.location
+        # return self.time == other.time and self.location == other.location
+        return (self.time == other.time or abs(self.time-other.time)==1) and self.location == other.location
     def __hash__(self):
-        return hash(str(self.time)+str(self.location.x) + str(self.location.y))
+        return hash(str(self.time)+str(self.location.x) + str(self.location.y) + str(self.direction))
     def is_equal_except_time(self, state):
         return self.location == state.location
     def __str__(self):
@@ -52,7 +53,7 @@ class Conflict(object):
         self.location_2 = Location()
 
     def __str__(self):
-        return '(' + str(self.time_1) + ', ' + str(self.time_2) + ', ' + self.agent_1 + ', ' + self.agent_2 + \
+        return '(' + str(self.time_1) + ',' + str(self.time_2) + ', ' + self.agent_1 + ', ' + self.agent_2 + \
              ', '+ str(self.location_1) + ', ' + str(self.location_2) + ')'
 
 class VertexConstraint(object):
@@ -108,7 +109,7 @@ class Environment(object):
 
         self.a_star = AStar(self)
 
-    def get_neighbors(self, state):    # this needs lot of modification
+    def get_neighbors(self, state):
         neighbors = []
 
         # Wait action
@@ -136,11 +137,11 @@ class Environment(object):
         n = State(state.time + 1, state.location, state.direction)
         if self.state_valid(n):
             neighbors.append(n)
-            n = State(state.time + 3, state.location, (state.direction+1)%4)
+            n = State(state.time + 1, state.location, (state.direction+1)%4)
             # neighbors.append(n)
             # n = State(state.time + 2, state.location, (state.direction+2)%4)
             neighbors.append(n)
-            n = State(state.time + 3, state.location, (state.direction+3)%4)
+            n = State(state.time + 1, state.location, (state.direction+3)%4)
             neighbors.append(n)
         
         return neighbors
@@ -164,7 +165,7 @@ class Environment(object):
                         return result
                     if state_1.is_equal_except_time(state_2) and state_1.time > state_2.time:
                         state_2a = self.get_state(agent_2, solution, j+1)
-                        if state_1.is_equal_except_time(state_2a) and state_1.time < state_2a.time:
+                        if state_1.is_equal_except_time(state_2a) and (state_1.time < state_2a.time or state_2.time == state_2a.time):
                             result.time_1 = state_2.time
                             result.time_2 = state_2a.time
                             result.type = Conflict.VERTEX
@@ -186,7 +187,7 @@ class Environment(object):
                         return result
                     if state_1.is_equal_except_time(state_2) and state_1.time > state_2.time:
                         state_2a = self.get_state(agent_1, solution, j+1)
-                        if state_1.is_equal_except_time(state_2a) and state_1.time < state_2a.time:
+                        if state_1.is_equal_except_time(state_2a) and (state_1.time < state_2a.time or state_2.time == state_2a.time):
                             result.time_1 = state_2.time
                             result.time_2 = state_2a.time
                             result.type = Conflict.VERTEX
@@ -336,10 +337,8 @@ class CBS(object):
     def generate_plan(self, solution):
         plan = {}
         for agent, path in solution.items():
-            path_dict_list = [{'t':state.time, 'x':state.location.x, 'y':state.location.y, 'd': str(state.direction)} for state in path]
-            # print(path_dict_list)
+            path_dict_list = [{'t':state.time, 'x':state.location.x, 'y':state.location.y, 'd':str(state.direction)} for state in path]
             plan[agent] = path_dict_list
-        # print(len(plan['agent1']))
         return plan
 
 

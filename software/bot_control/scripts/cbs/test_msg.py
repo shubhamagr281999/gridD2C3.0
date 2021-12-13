@@ -17,11 +17,6 @@ class pose_publisher:
         self.data.goal_d=[0,0,0,0]
         self.data.bot_num=[0,1,2,3]
 
-        self.data.start_x=[0]
-        self.data.start_y=[6]
-        self.data.goal_x=[2]
-        self.data.goal_y=[4]
-        self.data.bot_num=[0]
 
         # print(self.data)
         # while not rospy.is_shutdown(): 
