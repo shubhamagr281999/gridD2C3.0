@@ -88,7 +88,8 @@ class PID:
             msg_pub[i].linear.y = 0
             msg_pub[i].linear.z = 0
             msg_pub[i].angular.x = 0
-            msg_pub[i].angular.y = 0        
+            msg_pub[i].angular.y = 0
+                    
         self.control_input_pub0.publish(msg_pub[0])
         self.control_input_pub1.publish(msg_pub[1])
         self.control_input_pub2.publish(msg_pub[2])
