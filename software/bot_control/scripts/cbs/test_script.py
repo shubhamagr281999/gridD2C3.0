@@ -15,16 +15,16 @@ class pose_publisher:
         self.url='http://192.168.0.250/'
         rospy.Subscriber('/test_com',Int16,self.callback)
         time.sleep(2)
-        print("publihsed to cbs")
+        # print("publihsed to cbs")
             # time.sleep(2)
     def callback(self,msg):
         print(msg.data)
-        x = requests.post(self.url, data=str(msg.data))
-        print(x.text)
+        # x = requests.post(self.url, data=str(msg.data))
+        # print(x.text)
     def pubjj(self):
         while not rospy.is_shutdown():
             self.msg.data+=1
-            self.msg.data=self.msg.data%10
+            self.msg.data=self.msg.data%20
             self.pub_test.publish(self.msg)
             self.rate.sleep()
 if __name__ == '__main__':

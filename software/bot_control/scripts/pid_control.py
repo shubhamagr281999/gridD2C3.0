@@ -4,10 +4,10 @@ import os
 import rospy
 from time import sleep
 from tf.transformations import euler_from_quaternion
-from geometry_msgs.msg import Point, Twist
+from geometry_msgs.msg import Pose, PoseArray, Point
 from std_msgs.msg import Bool
 from math import sqrt, pi, atan
-from bot_control.msg import Poses
+# from bot_control.msg import Poses
 import numpy as np
 
 class PID:
@@ -33,41 +33,48 @@ class PID:
         self.yaw_large_error=0.7
         self.intergral_windup_yaw=20
         self.intergral_windup_lin=15
-        self.control_rate=rospy.Rate(30)
+        self.control_rate=rospy.Rate(10)
 
         #other valribales from here
+        
         self.n_agents=4
-        self.control_input_pub0 = rospy.Publisher('/bot0/cmd_vel', Twist, queue_size=10)
-        self.control_input_pub1 = rospy.Publisher('/bot1/cmd_vel', Twist, queue_size=10)
-        self.control_input_pub2 = rospy.Publisher('/bot2/cmd_vel', Twist, queue_size=10)
-        self.control_input_pub3 = rospy.Publisher('/bot3/cmd_vel', Twist, queue_size=10)
-        self.control_input_pub0_ = rospy.Publisher('/bot0/cmd_vel_dumy', Twist, queue_size=10)
-        self.control_input_pub1_ = rospy.Publisher('/bot1/cmd_vel_dumy', Twist, queue_size=10)
-        self.control_input_pub2_ = rospy.Publisher('/bot2/cmd_vel_dumy', Twist, queue_size=10)
-        self.control_input_pub3_ = rospy.Publisher('/bot3/cmd_vel_dumy', Twist, queue_size=10)
-        # self.cmd_pub=[self.control_input_pub0,self.control_input_pub1,self.control_input_pub2,self.control_input_pub3]
-        self.current_pose=np.zeros([self.n_agents,3])
+        
+        # publisher and message for bot velocities
+        self.control_input_pub = rospy.Publisher('/cmd_vel', PoseArray, queue_size=10)
+        self.cmd_vel_msg=PoseArray() # here we use only poistion of Poses. x will have vx, y will be vy and z will be omega in position object 
+        self.initialize_pose()
+
+        self.current_pose=np.zeros([self.n_agents,3]) #[bot_num][0 for x | 1 for y | 2 for yaw]
         self.goal_pose=np.zeros([self.n_agents,3])
         self.goal_pose[0][0]=42.428
         self.goal_pose[0][1]=299.57
 
-        self.current_state_sub=rospy.Subscriber('/poses', Poses,self.current_state_callback,queue_size=10)
+        self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
         self.goal_pose_sub=rospy.Subscriber('/goal_point', Point,self.goal_pose_callback,queue_size=10)
-        self.goal_complete_flag=rospy.Publisher('/bot1_waypoint_flag',Bool, queue_size=10)        
+        self.goal_complete_flag=rospy.Publisher('/bot_waypoint_flag',Bool, queue_size=10)        
 
         self.v_x_output=np.zeros(self.n_agents)
+        self.v_y_output=np.zeros(self.n_agents)
         self.w_output=np.zeros(self.n_agents)
+
         self.lastError_dist = np.zeros(self.n_agents)
         self.lastError_angle = np.zeros(self.n_agents)
         self.lastError_small=np.zeros(self.n_agents)
         self.sumError_dist = np.zeros(self.n_agents)
         self.sumError_angle = np.zeros(self.n_agents)
         sleep(2)
+
+    def initialize_pose(self):
+        temp_poses=[]
+        for i in range(self.n_agents):
+            temp_poses.append(Pose())
+        self.cmd_vel_msg.poses=temp_poses
+
     def current_state_callback(self,msg):
         for i in range(self.n_agents):
-            self.current_pose[i][0]=msg.posei[i].x
-            self.current_pose[i][1]=msg.posei[i].y
-            self.current_pose[i][2]=msg.posei[i].z
+            self.current_pose[i][0]=msg.poses[i].position.x
+            self.current_pose[i][1]=msg.poses[i].position.y
+            self.current_pose[i][2]=msg.poses[i].position.z
 
     def goal_pose_callback(self,msg):
         self.goal_pose[int(msg.z)][0]=msg.x
@@ -75,29 +82,22 @@ class PID:
         # print(self.goal_pose)
 
     def twist_msg(self):
-        msg_pub = [Twist(),Twist(),Twist(),Twist()]
         for i in range(self.n_agents):            
             if abs(self.v_x_output[i])>self.max_vel_lin :
-                msg_pub[i].linear.x = self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]    
+                self.cmd_vel_msg.poses[i].position.x = self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]    
             else :
-               msg_pub[i].linear.x = self.v_x_output[i]
+               self.cmd_vel_msg.poses[i].position.x = self.v_x_output[i]
+
+            if abs(self.v_y_output[i])>self.max_vel_lin :
+                self.cmd_vel_msg.poses[i].position.y = self.max_vel_lin*abs(self.v_y_output[i])/self.v_y_output[i]    
+            else :
+               self.cmd_vel_msg.poses[i].position.y = self.v_y_output[i]
+
             if(abs(self.w_output[i])>self.max_vel_ang):
-                msg_pub[i].angular.z = self.max_vel_ang*abs(self.w_output[i])/self.w_output[i]
+                self.cmd_vel_msg.poses[i].position.z = self.max_vel_ang*abs(self.w_output[i])/self.w_output[i]
             else :
-                msg_pub[i].angular.z = self.w_output[i]    
-            msg_pub[i].linear.y = 0
-            msg_pub[i].linear.z = 0
-            msg_pub[i].angular.x = 0
-            msg_pub[i].angular.y = 0
-                    
-        self.control_input_pub0.publish(msg_pub[0])
-        self.control_input_pub1.publish(msg_pub[1])
-        self.control_input_pub2.publish(msg_pub[2])
-        self.control_input_pub3.publish(msg_pub[3])
-        self.control_input_pub0_.publish(msg_pub[0])
-        self.control_input_pub1_.publish(msg_pub[1])
-        self.control_input_pub2_.publish(msg_pub[2])
-        self.control_input_pub3_.publish(msg_pub[3])
+                self.cmd_vel_msg.poses[i].position.z = self.w_output[i]    
+        self.control_input_pub.publish(self.cmd_vel_msg)
         # print(msg_pub.linear.x,msg_pub.angular.z)
 
     def resetValues(self,i):

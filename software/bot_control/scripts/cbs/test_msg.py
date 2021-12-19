@@ -19,12 +19,10 @@ class pose_publisher:
 
 
         # print(self.data)
-        # while not rospy.is_shutdown(): 
-        self.pub_test.publish(self.data)
-        print("publihsed to cbs")
-        time.sleep(2)
-        self.pub_test.publish(self.data)
-        print("publihsed to cbs")
+        while not rospy.is_shutdown(): 
+            self.pub_test.publish(self.data)
+            print("publihsed to cbs")
+            time.sleep(2)
             # time.sleep(2)
 
 
