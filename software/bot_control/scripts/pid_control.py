@@ -25,7 +25,7 @@ class PID:
         self.ki_angle_soft = 0.0/10.0
         self.kd_angle_soft = -10.0/80.0
 
-        self.max_vel_lin=10.0/10.0
+        self.max_vel_lin=30.0/60.0
         self.max_vel_ang=1.1
         self.lin_threshold=5
         self.dist_large_error=20
@@ -42,7 +42,7 @@ class PID:
         # publisher and message for bot velocities
         self.control_input_pub = rospy.Publisher('/cmd_vel', PoseArray, queue_size=10)
         self.cmd_vel_msg=PoseArray() # here we use only poistion of Poses. x will have vx, y will be vy and z will be omega in position object 
-        self.initialize_pose()
+        self.initialize_cmd_vel_msg()
 
         self.current_pose=np.zeros([self.n_agents,3]) #[bot_num][0 for x | 1 for y | 2 for yaw]
         self.goal_pose=np.zeros([self.n_agents,3])
@@ -53,7 +53,7 @@ class PID:
         self.goal_pose_sub=rospy.Subscriber('/goal_point', Point,self.goal_pose_callback,queue_size=10)
         self.goal_complete_flag=rospy.Publisher('/bot_waypoint_flag',Bool, queue_size=10)        
 
-        self.v_x_output=np.zeros(self.n_agents)
+        self.v_x_output=np.zeros(self.n_agents)   #vx and vy are in global coordinate system
         self.v_y_output=np.zeros(self.n_agents)
         self.w_output=np.zeros(self.n_agents)
 
@@ -64,7 +64,7 @@ class PID:
         self.sumError_angle = np.zeros(self.n_agents)
         sleep(2)
 
-    def initialize_pose(self):
+    def initialize_cmd_vel_msg(self):
         temp_poses=[]
         for i in range(self.n_agents):
             temp_poses.append(Pose())
@@ -96,7 +96,10 @@ class PID:
             if(abs(self.w_output[i])>self.max_vel_ang):
                 self.cmd_vel_msg.poses[i].position.z = self.max_vel_ang*abs(self.w_output[i])/self.w_output[i]
             else :
-                self.cmd_vel_msg.poses[i].position.z = self.w_output[i]    
+                self.cmd_vel_msg.poses[i].position.z = self.w_output[i]
+        self.cmd_vel_msg.poses[0].position.x=3
+        self.cmd_vel_msg.poses[2].position.y=3
+        self.cmd_vel_msg.poses[3].position.z=1    
         self.control_input_pub.publish(self.cmd_vel_msg)
         # print(msg_pub.linear.x,msg_pub.angular.z)
 
@@ -128,7 +131,7 @@ class PID:
     def pid(self):
         # sleep(1)
         while not rospy.is_shutdown():
-            for i in range(1):          #1 should be replaced with self.n_agents      
+            for i in range(self.n_agents):          #1 should be replaced with self.n_agents      
                 path_angle=self.angle((self.goal_pose[i][1]-self.current_pose[i][1]),(self.goal_pose[i][0]-self.current_pose[i][0]))
                 goal_distance=sqrt((self.current_pose[i][0]-self.goal_pose[i][0])**2+(self.current_pose[i][1]-self.goal_pose[i][1])**2)
                 diff_yaw=self.correct_diff_yaw(path_angle-self.current_pose[i][2])
@@ -160,7 +163,6 @@ class PID:
                     self.w_output[i]=0
                     self.resetValues(i)
                 # print("dist:",goal_distance," | yaw:",diff_yaw, " | v:",self.v_x_output[i]," | w:",self.w_output[i])
-            
             self.twist_msg()
             # print('hey there')
             self.control_rate.sleep() 
