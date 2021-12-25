@@ -137,11 +137,11 @@ class Environment(object):
         n = State(state.time + 1, state.location, state.direction)
         if self.state_valid(n):
             neighbors.append(n)
-            n = State(state.time + 1, state.location, (state.direction+1)%4)
+            n = State(state.time + 2, state.location, (state.direction+1)%4)
             # neighbors.append(n)
             # n = State(state.time + 2, state.location, (state.direction+2)%4)
             neighbors.append(n)
-            n = State(state.time + 1, state.location, (state.direction+3)%4)
+            n = State(state.time + 2, state.location, (state.direction+3)%4)
             neighbors.append(n)
         
         return neighbors
@@ -394,6 +394,7 @@ class wrapper:
                 k=Point()
                 k.x=solution[i][j]['x']
                 k.y=solution[i][j]['y']
+                k.z=solution[i][j]['t']
                 path_agenti.append(k)
             temp_pathi=PathArray()
             temp_pathi=path_agenti
