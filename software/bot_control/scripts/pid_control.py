@@ -5,13 +5,14 @@ import rospy
 from time import sleep
 from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import Pose, PoseArray, Point,PointStamped
-from std_msgs.msg import Bool, Uint8
-from math import sqrt, pi, atan, ceil, floor
+from std_msgs.msg import Bool, UInt8
+from math import sqrt, pi, atan, ceil, floor,sin,cos
 # from bot_control.msg import Poses
 import numpy as np
 
 class PID:
     def __init__(self):
+        self.n_agents=4
         # defining tunable params
         self.kp_lin = 0.1/100
         self.ki_lin = 0.0
@@ -43,7 +44,7 @@ class PID:
         self.sumError_angle = np.zeros(self.n_agents)
 
         #other valribales from here        
-        self.n_agents=4
+        
         self.current_pose=np.zeros([self.n_agents,3]) #[bot_num][0 for x | 1 for y | 2 for yaw]
         self.goal_pose=np.zeros([self.n_agents,3])
         self.v_x_output=np.zeros(self.n_agents)   #vx and vy are in global coordinate system
@@ -52,6 +53,11 @@ class PID:
         self.new_plan_requested = np.zeros(self.n_agents)+1 #creating such that we request a new plan only once until next once is recieved
         self.initialize_current_pose()
 
+        # bot specs (see daig in documentation)
+        self.l1=0.07
+        self.l2=0.07
+        self.l3=0.07
+
         # publishers
         self.control_input_pub = rospy.Publisher('/cmd_vel', PoseArray, queue_size=10)
         self.cmd_vel_msg=PoseArray() # here we use only poistion of Poses msg. x will have vx, y will be vy and z will be omega in position object 
@@ -59,12 +65,11 @@ class PID:
         self.wheel_vel_msg=PoseArray() # here we use only poistion of Poses msg. x will have w1, y will be w1 and z will be w3 in position object
         self.initialize_cmd_vel_msg()
         
-        self.flag_pid_pub = rospy.Publisher('/flag_id',Uint8,queue_size=10)
+        self.flag_pid_pub = rospy.Publisher('/flag_id',UInt8,queue_size=10)
 
         # subscribers
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
         self.goal_pose_sub=rospy.Subscriber('/goal_point', PointStamped,self.goal_pose_callback,queue_size=10)
-
 
         sleep(2)
 
@@ -152,17 +157,29 @@ class PID:
             else :
                 self.cmd_vel_msg.poses[i].position.z = self.w_output[i]  
 
-        self.control_input_pub.publish(self.cmd_vel_msg)
-
         # computing the wheel speeds
-        
+        self.inverse_tranform()
+
+        self.control_input_pub.publish(self.cmd_vel_msg)
+        self.wheel_speed_pub.publish(self.wheel_vel_msg)
+
+    def inverse_tranform(self):
+        for i in range(self.n_agents):
+            a=self.current_pose[i][2]
+            inverse_kinematics_transform=np.array([[sin(a),-cos(a),-self.l1],[cos(pi/4+a),sin(pi/4+a),-self.l2],[-cos(pi/4-a),sin(pi/4-a),-self.l3]])
+            req_vel=np.array([[self.v_x_output[i]],[self.v_y_output[i]],[self.w_output[i]]])
+            wheel_speed=np.matmul(inverse_kinematics_transform,req_vel)
+            # print(wheel_speed)
+            self.wheel_vel_msg.poses[i].position.x=wheel_speed[0][0]
+            self.wheel_vel_msg.poses[i].position.y=wheel_speed[1][0]
+            self.wheel_vel_msg.poses[i].position.z=wheel_speed[2][0]
+
     def resetValues(self,i):
         self.lastError_dist[i] = 0
         self.lastError_angle[i] = 0
         self.lastError_small[i]=0
         self.sumError_dist[i] = 0
-        self.sumError_angle[i] = 0
-        
+        self.sumError_angle[i] = 0        
 
     def angle(self,y,x):
         if(x>0 and y>0):
