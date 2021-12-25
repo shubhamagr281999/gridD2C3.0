@@ -3,9 +3,12 @@
 	<xacro:property name="wheel_dia" value="0.04"/>
 	<xacro:property name="bot_height" value="0.03"/>
 	<xacro:property name="length" value="0.08"/>
-	<xacro:property name="breadth" value="0.08"/>
+	<xacro:property name="breadth" value="0.1"/>
+	<xacro:property name="length_" value="0.05"/>
+	<xacro:property name="breadth_" value="0.005"/>
 	<xacro:property name="pi" value="3.14159"/>
 	<xacro:property name="m_base" value="1"/>
+	<xacro:property name="m_lever" value="0.1"/>
 	<xacro:property name="m_wheel" value="0.4"/>
 	<xacro:property name="m_aruco" value="0.04"/>
 	<xacro:property name="m_caster_wheel" value="0.1"/>
@@ -57,6 +60,7 @@
 		</visual> -->
 
 	</link>
+
 	<link name="aruco">
 		<inertial>
      		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -76,6 +80,8 @@
 			</geometry>
 		</visual>
 	</link>
+
+<!-- x  direction wheel -->
 	<link name="left_wheel">
 		<inertial>
      		<origin xyz="0 0 0" rpy="0 0 0"/>
@@ -154,35 +160,26 @@
 		</visual>
 	</link>
 
-	<!-- <link name="caster_wheel">
+<!-- y direction wheel -->
+	<link name="back_right_wheel_lever">
 		<inertial>
      		<origin xyz="0 0 0" rpy="0 0 0"/>
-     		<mass value="${m_caster_wheel}"/>
-     		<inertia ixx="${m_caster_wheel*(2*wheel_dia*wheel_dia/16.0)/5.0}"  ixy="0"  ixz="0" iyy="${m_caster_wheel*(2*wheel_dia*wheel_dia/16.0)/5.0}" iyz="0" izz="${m_caster_wheel*(2*wheel_dia*wheel_dia/16.0)/5.0}" />
+     		<mass value="${m_lever}"/>
+     		<inertia ixx="${m_lever*(breadth_*breadth_+0.008*0.008)/12.0}"  ixy="0"  ixz="0" iyy="${m_lever*(length_*length_+0.008*0.008)/12.0}" iyz="0" izz="${m_lever*(breadth_*breadth_+length_*length_)/12.0}" />
    		</inertial>
 		<collision>
-			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<origin xyz="0 0.02 0" rpy="0 0 0"/>
 			<geometry>
-				<sphere radius="${wheel_dia/4.0}"/>
-			</geometry>			
-			<surface>
-		        <friction>
-		          <ode>
-		            <mu>0</mu>
-		            <mu2>0</mu2>
-		            <slip1>1.0</slip1>
-		            <slip2>1.0</slip2>
-		          </ode>
-		        </friction>
-      		</surface>
+				<box size="0.008 ${length_} ${breadth_}"/>
+			</geometry>
 		</collision>
 		<visual>
-			<origin xyz="0 0 0" rpy="0 0 0"/>
+			<origin xyz="0 0.02 0" rpy="0 0 0"/>
 			<geometry>
-				<sphere radius="${wheel_dia/4.0}"/>
+				<box size="0.008 ${length_} ${breadth_}"/>
 			</geometry>
 		</visual>
-	</link> -->
+	</link>
 
 <!-- joints def -->
 
@@ -199,27 +196,36 @@
 	<joint name="bot${bot_number}_left_wheel_joint" type="continuous">
 		<parent link="base_link"/>
 		<child link="left_wheel"/>
-		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.03 ${breadth/2+0.008}  -0.01"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.022 ${breadth/2+0.006}  -0.01"/>
 		<axis rpy="0 0 0" xyz="0 0 1"/>
 	</joint>	
 	<joint name="bot${bot_number}_right_wheel_joint" type="continuous">
 		<parent link="base_link"/>
 		<child link="right_wheel"/>
-		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.03 ${-breadth/2-0.008}  -0.01"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="-0.022 ${-breadth/2-0.006}  -0.01"/>
 		<axis rpy="0 0 0" xyz="0 0 1"/>
 	</joint>
 
 	<joint name="bot${bot_number}_left_wheel_joint_dumy" type="continuous">
 		<parent link="base_link"/>
 		<child link="left_wheel_dumy"/>
-		<origin rpy="0 ${pi/2} ${pi/2}" xyz="0.03 ${breadth/2+0.008}  -0.01"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="0.022 ${breadth/2+0.006}  -0.01"/>
 		<axis rpy="0 0 0" xyz="0 0 1"/>
 	</joint>	
 	<joint name="bot${bot_number}_right_wheel_joint_dumy" type="continuous">
 		<parent link="base_link"/>
 		<child link="right_wheel_dumy"/>
-		<origin rpy="0 ${pi/2} ${pi/2}" xyz="0.03 ${-breadth/2-0.008}  -0.01"/>
+		<origin rpy="0 ${pi/2} ${pi/2}" xyz="0.022 ${-breadth/2-0.006}  -0.01"/>
 		<axis rpy="0 0 0" xyz="0 0 1"/>
+	</joint>
+
+
+<!-- y direction level joints -->
+	<joint name="bot${bot_number}_back_right_wheel_lever" type="continuous">
+		<parent link="base_link"/>
+		<child link="back_right_wheel_lever"/>
+		<origin rpy="0 0 0" xyz="${-length/2-0.006} -0.04  -0.005"/>
+		<axis rpy="0 0 0" xyz="1 0 0"/>
 	</joint>
 
 	<!-- controls plugin for vlecoty based control -->
@@ -233,7 +239,7 @@
       <wheelSeparation>0.096</wheelSeparation>
       <wheelDiameter>0.04</wheelDiameter>
       <torque>1</torque>
-      <commandTopic>cmd_vel</commandTopic>
+      <commandTopic>cmd_vel_x</commandTopic>
       <odometryTopic>odom</odometryTopic>
       <odometryFrame>odom</odometryFrame>
       <robotBaseFrame>base_link</robotBaseFrame>
@@ -248,7 +254,7 @@
       <wheelSeparation>0.096</wheelSeparation>
       <wheelDiameter>0.04</wheelDiameter>
       <torque>1</torque>
-      <commandTopic>cmd_vel_dumy</commandTopic>
+      <commandTopic>cmd_vel_dumy_x</commandTopic>
       <odometryTopic>odom</odometryTopic>
       <odometryFrame>odom</odometryFrame>
       <robotBaseFrame>base_link</robotBaseFrame>

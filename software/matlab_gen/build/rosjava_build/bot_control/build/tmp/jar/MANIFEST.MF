@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Export-Package: bot_control;version="0.0.0";uses:="geometry_msgs,org.r
+ os.internal.message"
+Bundle-SymbolicName: org.ros.rosjava_messages.bot_control
+Bundle-Version: 0.0.0
+Bundle-Name: bot_control
+Bundle-ManifestVersion: 2
+Bnd-LastModified: 1639911446000
+Import-Package: geometry_msgs;version="[1.10,2)",org.ros.internal.mess
+ age
+Created-By: 1.8.0_222 (AdoptOpenJDK)
+Tool: Bnd-2.1.0.20130426-122213
+
