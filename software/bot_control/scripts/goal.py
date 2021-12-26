@@ -1,10 +1,9 @@
 #!/usr/bin/env python
 
 import rospy
-import time
 from time import sleep
 from std_msgs.msg import UInt8
-from bot_control.msg import StartGoal, CompletePlan, PathArray, Poses
+from bot_control.msg import CompletePlan
 from geometry_msgs.msg import PointStamped
 import numpy as np
 
@@ -22,7 +21,6 @@ class goal_publisher:
         self.pub_new_plan = rospy.Publisher('/new_plan',UInt8,queue_size=10)
 
         # subscribers
-        # self.poses_sub=rospy.Subscriber('/poses',Poses,self.pose_callback,queue_size=10)
         self.plans_callback=rospy.Subscriber("/cbs/plan",CompletePlan,self.plan_callback,queue_size=10)
         self.sub_flag_pid = rospy.Subscriber("/flag_pid",UInt8,self.flag_pid_callback,queue_size=10)
         self.one_step_goal = rospy.Subscriber("/one_step_goal",PointStamped,self.one_step_callback,queue_size=10)
@@ -65,11 +63,6 @@ class goal_publisher:
         # print(self.turning_points)
         # print('-----------------------------------------------------------')
 
-    def pose_callback(self,msg):
-        for i in range(self.n_agents):
-            self.current_pose[i][0]=msg.posei[i].x
-            self.current_pose[i][1]=msg.posei[i].y
-            self.current_pose[i][2]=msg.posei[i].z
 
     def flag_pid_callback(self,msg):
         self.need_new_plan[msg.data]=1
@@ -78,18 +71,6 @@ class goal_publisher:
     def one_step_callback(self,msg):
         print('will be done soon')
 
-    def flipmotor(self,bot_num):
-    	rospy.loginfo('fliiping pracel for bot', bot_num )
-        msg=Int16()
-        msg.data=1
-        if(bot_num==1):
-            self.pub_parcel_flip1.publish(msg)
-        if(bot_num==2):
-            self.pub_parcel_flip2.publish(msg)
-        if(bot_num==3):
-            self.pub_parcel_flip3.publish(msg)
-        if(bot_num==4):
-            self.pub_parcel_flip4.publish(msg)
 
     def goal_pub(self,bot_num,yaw):
         msg=Point()
@@ -119,4 +100,3 @@ if __name__ == '__main__':
     rospy.loginfo("goal_publisher created | now goal for each bot will be published on goal topics")
     goal_pub_obj=goal_publisher()
     rospy.spin()
-    # goal_pub_obj.goal()

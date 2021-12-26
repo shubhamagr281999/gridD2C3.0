@@ -11,31 +11,27 @@ import numpy as np
 
 class start_goal_publisher:
     def __init__(self):
-        self.rate=rospy.Rate(0.5)
-        self.n_agents=1
+        self.rate=rospy.Rate(10)
+        self.n_agents=4
         self.current_pose=np.zeros([self.n_agents,3]) # 2D array [bot_num][0 for x | 1 for y | 2 for yaw]
-        self.goal_pose=np.zeros([self.n_agents,3])
-        self.poses_sub=rospy.Subscriber('/poses',Poses,self.pose_callback,queue_size=10)
-        self.pub_goal=rospy.Publisher('/goal_point',Point,queue_size=10)
-        self.dest_sub=rospy.Subscriber('/pkg_dest_id',dest_id,self.dest_callback,queue_size=1)
-        self.dest_pub=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=10)
+        
         self.delivery_zone_occupancy = np.zeros([9,4]) -1
-        self.startgoal= StartGoal()
         self.x0 = 0 #change according to camera for setting up the arena
         self.y0 = 0 #change according to camera for setting up the arena
         self.grid_locations = self.grid_location_assigner()  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
-        self.status_msg = None
-        self.test_msg = None
-
-        #subscribers
-        self.bot_status= rospy.Subscriber('/bot_status',Bot_status,self.update_status_callback, queue_size=10)
-        self.task_flag=rospy.Subscriber('/task_flag',Bot_task,self.next_task_callback, queue_size=10)
-        
-        # publishers
-        self.update_status = rospy.Publisher('/bot_status',Bot_status,queue_size=10)
-        self.update_task = rospy.Publisher('/task_flag',Bot_task, queue_size=10)
         self.grid_locations_LS1= [self.x0+1.5, self.y0- 3.5]
         self.grid_locations_LS2= [self.x0 +6.5, self.y0 - 3.5]
+
+        #subscribers
+        self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
+        self.new_plan_sub=rospy.Subscriber('/new_plan',UInt8,self.new_plan_callback,queue_size=10)
+        
+        # publishers
+        self.dest_pub=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=10)
+        self.startgoal= StartGoal()
+        self.one_step_goal_pub=rospy.Publisher('/one_step_goal',PointStamped,queue_size=10)    
+
+
 
         self.lossfunction_para1= 1 % weighted loss function-LS selection 
         self.lossfunction_para2= 1
