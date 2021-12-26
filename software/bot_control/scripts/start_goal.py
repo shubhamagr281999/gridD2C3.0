@@ -26,8 +26,12 @@ class start_goal_publisher:
         self.grid_locations = self.grid_location_assigner()  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
         self.status_msg = None
         self.test_msg = None
+
+        #subscribers
         self.bot_status= rospy.Subscriber('/bot_status',Bot_status,self.update_status_callback, queue_size=10)
         self.task_flag=rospy.Subscriber('/task_flag',Bot_task,self.next_task_callback, queue_size=10)
+        
+        # publishers
         self.update_status = rospy.Publisher('/bot_status',Bot_status,queue_size=10)
         self.update_task = rospy.Publisher('/task_flag',Bot_task, queue_size=10)
         
