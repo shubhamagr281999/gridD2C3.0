@@ -58,7 +58,7 @@ class goal_publisher:
             #Halt
             else:
                 turnpoints.append([-100,-100])
-        turnpoints.append([x[-1],y[-1]])
+                
         self.turning_points[bot_num]=turnpoints
         # print(self.turning_points)
         # print('-----------------------------------------------------------')

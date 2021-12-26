@@ -2,8 +2,9 @@
 #include <ESP8266WebServer.h>
 #include <WiFiClient.h>
 
-IPAddress local_IP(192, 168, 0, 250);
-IPAddress gateway(192, 168, 0, 1);
+IPAddress local_IP(192, 168, 0, 250); // just change the last one make it static
+IPAddress gateway(192, 168, 0, 1); 
+// gateway is router IP adress
 IPAddress subnet(255, 255, 255, 0);
 
 const char* ssid = "Tinkerers' Lab";

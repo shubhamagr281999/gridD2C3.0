@@ -2,9 +2,10 @@
 
 import rospy
 import time
+import pandas as pd
 from time import sleep
 from std_msgs.msg import Int16
-from bot_control.msg import StartGoal, CompletePlan, PathArray, Poses, dest_id
+from bot_control.msg import StartGoal, CompletePlan, PathArray, Poses, dest_id, dest_id, pkg_flag
 from geometry_msgs.msg import Point
 import numpy as np
 
@@ -14,7 +15,18 @@ class start_goal_publisher:
         self.rate=rospy.Rate(10)
         self.n_agents=4
         self.current_pose=np.zeros([self.n_agents,3]) # 2D array [bot_num][0 for x | 1 for y | 2 for yaw]
-        
+       
+        self.dicti = {0: 'Mumbai', 1: 'Delhi', 2: 'Kolkata', 3: 'Chennai', 4: 'Bengaluru', 5: 'Hyderabad', 6: 'Pune', 7: 'Ahmedabad', 8: 'Jaipur'}
+        self.key_list = list(self.dicti.keys())
+        self.val_list = list(self.dicti.values())
+        self.excel = pd.read_excel(r'~/catkin_ws/src/gridD2C3.0/Sample Data.xls')
+        self.destination= self.excel['Destination'].tolist()
+        self.LS= self.excel['Induct Station'].tolist()
+        self.list_split()
+        self.pub_destination=rospy.Publisher('/pkg_dest_id',dest_id,queue_size=1)
+        self.sub_station=rospy.Subscriber("/pkg_received", pkg_flag, self.assign)
+        self.dest_id_msg = dest_id()
+
         self.delivery_zone_occupancy = np.zeros([9,4]) -1
         self.x0 = 0 #change according to camera for setting up the arena
         self.y0 = 0 #change according to camera for setting up the arena
@@ -74,12 +86,33 @@ class start_goal_publisher:
 
         self.m_LS1= (self.n_agents % 2)
         self.m_LS2= (self.nagents - (self.n_agents%2))
-
-
-
-
-        
         # print(self.grid_locations)
+
+    def list_split(self):
+        self.induct1 = []
+        self.induct2 = []
+        for i in range(len(self.LS)):
+            if self.LS[i] == 1:
+                self.induct1.append(self.destination[i])
+            elif self.LS[i] ==2:
+                self.induct2.append(self.destination[i])
+        # print(self.induct1)
+
+    def assign(self,msg):
+        if msg.LS == 1:
+            self.dest_id_msg.LS = 1
+            self.dest_id_msg.bot_num = msg.bot_num
+            self.dest_id_msg.dest_id = self.key_list[self.val_list.index(self.induct1[0])]
+            self.induct1.pop(0)
+            self.pub_destination.publish(self.dest_id_msg)
+            # print(self.dest_id_msg.dest_id)
+        elif msg.LS == 2:
+            self.dest_id_msg.LS = 2
+            self.dest_id_msg.bot_num = msg.bot_num
+            self.dest_id_msg.dest_id = self.key_list[self.val_list.index(self.induct2[0])]
+            self.induct2.pop(0)
+            self.pub_destination.publish(self.dest_id_msg)
+
     def update_status_callback(self,msg):
         self.status_msg = msg
         
@@ -202,7 +235,6 @@ class start_goal_publisher:
                     self.status_msg.status[i] = 0  #updated the status of the bot
                     self.update_status.publish(self.status_msg)
 
-    
     #Mumbai's center is treated as origin and down the screen is +ve x-axis and left to right of screen is +ve y-axis
     def grid_location_assigner(self):
         k = []
@@ -218,7 +250,6 @@ class start_goal_publisher:
             k.append(a)
         return k
 
-
     def dest_callback(self,msg):
             for i in range(4):
                 if self.delivery_zone_occupancy[msg.bot_num.data][i]==-1:
@@ -232,13 +263,13 @@ class start_goal_publisher:
                     self.startgoal.goal_d.data = [0]
                     dest_pub.publish(self.startgoal)
                     break
-
         
     def pose_callback(self,msg):
         for i in range(self.n_agents):
             self.current_pose[i][0]=msg.posei[i].x
             self.current_pose[i][1]=msg.posei[i].y
             self.current_pose[i][2]=msg.posei[i].z
+
     def go_to_goal(self,bot_num,x,y,theta):
         msg=Point()
         msg.x=(self.x)
@@ -258,18 +289,13 @@ class start_goal_publisher:
             numpy.append(self.queue_LS1_assigned, bot_num)
             return 1
 
-    
-
-
-    
-
-
-        
-
 
 if __name__ == '__main__':
     print("here ")
     rospy.init_node('Start_goal_publisher')
     rospy.loginfo("Start goal_publisher created | decides gaol based on the logic defined")
     start_goal_pub_obj=start_goal_publisher()
-    # rospy.spin()
+    rospy.init_node('destination_assign')
+    rospy.loginfo('Assigner node created')
+    assigner = destination_assign()
+    rospy.spin()
