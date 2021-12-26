@@ -14,33 +14,60 @@ class PID:
     def __init__(self):
         self.n_agents=4
         # defining tunable params
-        self.kp_lin = 0.1/100
-        self.ki_lin = 0.0
-        self.kd_lin = 0.0
+        
+        self.kp_lin_x= 1
+        self.kd_lin_x= 0
+        self.ki_lin_x= 0
 
-        self.kp_angle = -35.0/100.0
-        self.ki_angle = 0.0
-        self.kd_angle = -11.0/100.0
+        self.kp_soft_lin_x= 1
+        self.kd_soft_lin_x= 0
+        self.ki_soft_lin_x= 0
 
-        self.kp_angle_soft = -20.0/80.0
-        self.ki_angle_soft = 0.0/10.0
-        self.kd_angle_soft = -10.0/80.0
+        self.kp_lin_y= 1
+        self.kd_lin_y= 0
+        self.ki_lin_y= 0
+
+        self.kp_soft_lin_y= 1
+        self.kd_soft_lin_y= 0
+        self.ki_soft_lin_y= 0
+
+        self.kp_angle= 1
+        self.kd_angle= 0
+        self.ki_angle= 0
+
+        self.kp_soft_angle= 1
+        self.kd_soft_angle= 0
+        self.ki_soft_angle= 0
 
         self.max_vel_lin=30.0/60.0
         self.max_vel_ang=1.1
-        self.lin_threshold=5
-        self.dist_large_error=20
-        self.yaw_threshold=0.1
-        self.yaw_large_error=0.7
+
+        #self.lin_threshold=5
+        #self.dist_large_error=20
+        #self.yaw_threshold=0.1
+        #self.yaw_large_error=0.7
         self.intergral_windup_yaw=20
-        self.intergral_windup_lin=15
+        self.intergral_windup_lin_x=15
+        self.intergral_windup_lin_y=15
         self.control_rate=rospy.Rate(10)
 
+        self.lin_x_threshold = 5
+        self.lin_x_smalldiff = 10
+
+        self.lin_y_threshold = 5
+        self.lin_y_smalldiff = 10
+
+        self.angle_threshold = 0.1
+        self.angle_smalldiff = 0.3
+
        
-        self.lastError_dist = np.zeros(self.n_agents)
+        self.lastError_dist_x = np.zeros(self.n_agents)
+        self.lastError_dist_y = np.zeros(self.n_agents)
         self.lastError_angle = np.zeros(self.n_agents)
-        self.lastError_small=np.zeros(self.n_agents)
-        self.sumError_dist = np.zeros(self.n_agents)
+
+        #self.lastError_small=np.zeros(self.n_agents)  CHECK IF THIS IS REQUIRED
+        self.sumError_dist_x = np.zeros(self.n_agents)
+        self.sumError_dist_y = np.zeros(self.n_agents)
         self.sumError_angle = np.zeros(self.n_agents)
 
         #other valribales from here        
@@ -73,7 +100,7 @@ class PID:
         sleep(2)
 
     def initialize_current_pose(self):
-
+        #  ____CHECK THIS!!____
         for i in range(self.n_agents):
             if(i<int(ceil(self.n_agents/2.0))):
                 self.current_pose[i][0]=(4-i)*6+3
@@ -132,7 +159,8 @@ class PID:
     def goal_pose_callback(self,msg):
         self.goal_pose[msg.header.seq][0]=msg.point.x
         self.goal_pose[msg.header.seq][1]=msg.point.y
-        self.goal_pose[msg.header.seq][2]=msg.point.z
+        if (msg.point.z != 100):
+            self.goal_pose[msg.header.seq][2]=msg.point.z
         self.need_new_plan[msg.header.seq]=0
         # print(self.goal_pose)
 
@@ -198,63 +226,103 @@ class PID:
         return diff_yaw
 
     def pid(self):
-        # sleep(1)
         while not rospy.is_shutdown():
-            for i in range(self.n_agents):          #1 should be replaced with self.n_agents
-                if(self.need_new_plan[i] == 0):      
-                    path_angle=self.angle((self.goal_pose[i][1]-self.current_pose[i][1]),(self.goal_pose[i][0]-self.current_pose[i][0]))
-                    goal_distance=sqrt((self.current_pose[i][0]-self.goal_pose[i][0])**2+(self.current_pose[i][1]-self.goal_pose[i][1])**2)
-                    diff_yaw=self.correct_diff_yaw(path_angle-self.current_pose[i][2])
-                    # print("-----------------------------")
-                    # print(self.goal_pose[i])
+            for i in range(self.n_agents):
+                if(self.need_new_plan[i] == 0): 
+                    diff_yaw=self.correct_diff_yaw(self.goal_pose[i][2]-self.current_pose[i][2])
+                    distance_x= self.goal_pose[i][0] - self.current_pose[i][0]
+                    distance_y= self.goal_pose[i][1] - self.current_pose[i][1]
+                    #PID along x
+                    if (abs(distance_x) > self.lin_x_smalldiff):
+                        self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
+                        self.lastError_dist_x[i]= distance_x
+                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                            sumError_dist_x[i] = sumError_dist_x[i] + distance_x
 
-                    #aligining towards the path
-                    condition1=((abs(diff_yaw)>self.yaw_threshold and self.v_x_output[i]==0) or abs(diff_yaw)>self.yaw_large_error)        
-                    # print(condition1)
-                    if (condition1):
-                        self.w_output[i]=self.kp_angle*(diff_yaw)+self.kd_angle*(diff_yaw-self.lastError_angle[i])+self.ki_angle*(self.sumError_angle[i])
-                        self.lastError_angle[i]=diff_yaw
-                        if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
-                            self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
-                        # print(diff_yaw,path_angle,self.current_pose[i][2])
+                    elif (abs(distance_x) < self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
+                        self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
+                        self.lastError_dist_x[i]= distance_x
+                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                            sumError_dist_x[i] = sumError_dist_x[i] + distance_x
 
-                    #moving towards goal        
-                    condition2= goal_distance>self.lin_threshold and (not condition1)
-                    if (condition2):
-                        self.v_x_output[i]=self.kp_lin*(goal_distance)+self.kd_lin*(goal_distance-self.lastError_dist[i])+self.ki_lin*self.sumError_dist[i]
-                        self.w_output[i]=self.kp_angle_soft*(diff_yaw)+self.kd_angle_soft*(diff_yaw-self.lastError_small[i])
-                        self.lastError_dist[i]=goal_distance
-                        self.lastError_small[i]=diff_yaw
-                        if(abs(self.sumError_dist[i]+goal_distance)<self.intergral_windup_lin):
-                            self.sumError_dist[i]=self.sumError_dist[i]+goal_distance
+                    else:
+                        self.v_x_output[i]=0
+                    #PID along y
+                    if (abs(distance_y) > self.lin_y_smalldiff):
+                        self.v_y_output[i] = self.kp_lin_y*(distance_y) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
+                        self.lastError_dist_x[i]= distance_x
+                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                            sumError_dist_x[i] = sumError_dist_x[i] + distance_x
+
+                    elif (abs(distance_x) < self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
+                        self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
+                        self.lastError_dist_x[i]= distance_x
+                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                            sumError_dist_x[i] = sumError_dist_x[i] + distance_x
+
+                    else:
+                        self.v_x_output[i]=0
+
+
+
+        # sleep(1)
+        # while not rospy.is_shutdown():
+        #     for i in range(self.n_agents):          #1 should be replaced with self.n_agents
+        #         if(self.need_new_plan[i] == 0):      
+        #             path_angle=self.angle((self.goal_pose[i][1]-self.current_pose[i][1]),(self.goal_pose[i][0]-self.current_pose[i][0]))
+        #             goal_distance=sqrt((self.current_pose[i][0]-self.goal_pose[i][0])**2+(self.current_pose[i][1]-self.goal_pose[i][1])**2)
+        #             diff_yaw=self.correct_diff_yaw(path_angle-self.current_pose[i][2])
+        #             # print("-----------------------------")
+        #             # print(self.goal_pose[i])
+
+        #             #aligining towards the path
+        #             condition1=((abs(diff_yaw)>self.yaw_threshold and self.v_x_output[i]==0) or abs(diff_yaw)>self.yaw_large_error)        
+        #             # print(condition1)
+        #             if (condition1):
+        #                 self.w_output[i]=self.kp_angle*(diff_yaw)+self.kd_angle*(diff_yaw-self.lastError_angle[i])+self.ki_angle*(self.sumError_angle[i])
+        #                 self.lastError_angle[i]=diff_yaw
+        #                 if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
+        #                     self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
+        #                 # print(diff_yaw,path_angle,self.current_pose[i][2])
+
+        #             #moving towards goal        
+        #             condition2= goal_distance>self.lin_threshold and (not condition1)
+        #             if (condition2):
+        #                 self.v_x_output[i]=self.kp_lin*(goal_distance)+self.kd_lin*(goal_distance-self.lastError_dist[i])+self.ki_lin*self.sumError_dist[i]
+        #                 self.w_output[i]=self.kp_angle_soft*(diff_yaw)+self.kd_angle_soft*(diff_yaw-self.lastError_small[i])
+        #                 self.lastError_dist[i]=goal_distance
+        #                 self.lastError_small[i]=diff_yaw
+        #                 if(abs(self.sumError_dist[i]+goal_distance)<self.intergral_windup_lin):
+        #                     self.sumError_dist[i]=self.sumError_dist[i]+goal_distance
                 
-                    if( (not condition1) and (not condition2)): #this condition is called when given goal_pose is obtained
-                        self.v_x_output[i]=0.0
-                        self.w_output[i]=0.0
-                        self.v_y_output[i]=0.0
-                        self.need_new_plan[i]=1
-                        self.resetValues(i)
+        #             if( (not condition1) and (not condition2)): #this condition is called when given goal_pose is obtained
+        #                 self.v_x_output[i]=0.0
+        #                 self.w_output[i]=0.0
+        #                 self.v_y_output[i]=0.0
+        #                 self.need_new_plan[i]=1
+        #                 self.resetValues(i)
 
-                    # for halt we appned -100,-100 to goal_pose hence the below thing for the same
-                    if (self.goal_pose[i][0]==-100 and self.goal_pose[i][0]==-100)
-                        if(self.halt_count[i] < self.halt_time):
-                            self.halt_count[i]=self.halt_count[i]+1
-                        else :
-                            self.need_new_plan[i]=1
-                            self.halt_count[i]=0
-                        self.v_x_output[i]=0.0
-                        self.v_y_output[i]=0.0
-                        self.w_output[i]=0.0
-                if(self.need_new_plan[i] == 1)
-                    pub_msgs=UInt8()
-                    pub_msgs.data=i
-                    self.flag_pid_pub.publish(pub_msgs)
-                    self.need_new_plan[i]=2
-                # print("dist:",goal_distance," | yaw:",diff_yaw, " | v:",self.v_x_output[i]," | w:",self.w_output[i])
+        #             # for halt we appned -100,-100 to goal_pose hence the below thing for the same
+        #             if (self.goal_pose[i][0]==-100 and self.goal_pose[i][0]==-100)
+        #                 if(self.halt_count[i] < self.halt_time):
+        #                     self.halt_count[i]=self.halt_count[i]+1
+        #                 else :
+        #                     self.need_new_plan[i]=1
+        #                     self.halt_count[i]=0
+        #                 self.v_x_output[i]=0.0
+        #                 self.v_y_output[i]=0.0
+        #                 self.w_output[i]=0.0
+        #         if(self.need_new_plan[i] == 1)
+        #             pub_msgs=UInt8()
+        #             pub_msgs.data=i
+        #             self.flag_pid_pub.publish(pub_msgs)
+        #             self.need_new_plan[i]=2
+        #         # print("dist:",goal_distance," | yaw:",diff_yaw, " | v:",self.v_x_output[i]," | w:",self.w_output[i])
             
-            self.twist_msg()
-            # print('hey there')
-            self.control_rate.sleep() 
+        #     self.twist_msg()
+        #     # print('hey there')
+        #     self.control_rate.sleep() 
+
     
 if __name__ == '__main__':
 
