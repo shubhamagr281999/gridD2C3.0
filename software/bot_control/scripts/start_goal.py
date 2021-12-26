@@ -297,5 +297,4 @@ if __name__ == '__main__':
     start_goal_pub_obj=start_goal_publisher()
     rospy.init_node('destination_assign')
     rospy.loginfo('Assigner node created')
-    assigner = destination_assign()
     rospy.spin()
