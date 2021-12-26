@@ -1,20 +1,18 @@
 #! /usr/bin/env python2.7
 
-import os
 import rospy
-from time import sleep
 from tf.transformations import euler_from_quaternion
 from geometry_msgs.msg import Pose, PoseArray, Point,PointStamped
 from std_msgs.msg import Bool, UInt8
-from math import sqrt, pi, atan, ceil, floor,sin,cos
-# from bot_control.msg import Poses
+from math import sqrt, pi, atan, ceil,sin,cos
 import numpy as np
 
 class PID:
     def __init__(self):
         self.n_agents=4
-        # defining tunable params
-        
+        self.control_rate=rospy.Rate(10)
+
+        # defining tunable params        
         self.kp_lin_x= 1
         self.kd_lin_x= 0
         self.ki_lin_x= 0
@@ -39,18 +37,12 @@ class PID:
         self.kd_soft_angle= 0
         self.ki_soft_angle= 0
 
-        self.max_vel_lin_x=30.0/60.0
-        self.max_vel_lin_y=30.0/60.0
+        self.max_vel_lin=30.0/60.0
         self.max_vel_ang=1.1
 
-        #self.lin_threshold=5
-        #self.dist_large_error=20
-        #self.yaw_threshold=0.1
-        #self.yaw_large_error=0.7
         self.intergral_windup_yaw=20
         self.intergral_windup_lin_x=15
         self.intergral_windup_lin_y=15
-        self.control_rate=rospy.Rate(10)
 
         self.lin_x_threshold = 5
         self.lin_x_smalldiff = 10
@@ -61,18 +53,17 @@ class PID:
         self.angle_threshold = 0.1
         self.angle_smalldiff = 0.3
 
-       
+        self.halt_time=20  #1 unit here is one time step which is 1/frequncy (control rate)
+        # error varibales
         self.lastError_dist_x = np.zeros(self.n_agents)
         self.lastError_dist_y = np.zeros(self.n_agents)
         self.lastError_angle = np.zeros(self.n_agents)
 
-        #self.lastError_small=np.zeros(self.n_agents)  CHECK IF THIS IS REQUIRED
         self.sumError_dist_x = np.zeros(self.n_agents)
         self.sumError_dist_y = np.zeros(self.n_agents)
         self.sumError_angle = np.zeros(self.n_agents)
 
-        #other valribales from here        
-        
+        #other valribales from here     
         self.current_pose=np.zeros([self.n_agents,3]) #[bot_num][0 for x | 1 for y | 2 for yaw]
         self.goal_pose=np.zeros([self.n_agents,3])
         self.v_x_output=np.zeros(self.n_agents)   #vx and vy are in global coordinate system
@@ -81,6 +72,7 @@ class PID:
         self.initialize_current_pose()
         self.halt_count=np.zeros(self.n_agents)
         self.need_new_plan = np.zeros(self.n_agents) +1 #in PID sense of a new plan is a next waypoint
+
         # bot specs (see daig in documentation)
         self.l1=0.07
         self.l2=0.07
@@ -98,10 +90,7 @@ class PID:
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
         self.goal_pose_sub=rospy.Subscriber('/goal_point', PointStamped,self.goal_pose_callback,queue_size=10)
 
-        sleep(2)
-
     def initialize_current_pose(self):
-        #  ____CHECK THIS!!____
         for i in range(self.n_agents):
             if(i<int(ceil(self.n_agents/2.0))):
                 self.current_pose[i][0]=(4-i)*6+3
@@ -277,7 +266,7 @@ class PID:
 
 
                     # for halt we appned -100,-100 to goal_pose hence the below thing for the same
-                    if (self.goal_pose[i][0]==-100 and self.goal_pose[i][0]==-100)
+                    if (self.goal_pose[i][0]==-100 and self.goal_pose[i][0]==-100):
                         if(self.halt_count[i] < self.halt_time):
                             self.halt_count[i]=self.halt_count[i]+1
                         else :
@@ -286,13 +275,12 @@ class PID:
                         self.v_x_output[i]=0.0
                         self.v_y_output[i]=0.0
                         self.w_output[i]=0.0
-                if(self.need_new_plan[i] == 1)
+                if(self.need_new_plan[i] == 1):
                     pub_msgs=UInt8()
                     pub_msgs.data=i
                     self.flag_pid_pub.publish(pub_msgs)
                     self.need_new_plan[i]=2
-                # print("dist:",goal_distance," | yaw:",diff_yaw, " | v:",self.v_x_output[i]," | w:",self.w_output[i])
-            
+                                
             self.twist_msg()
             # print('hey there')
             self.control_rate.sleep() 

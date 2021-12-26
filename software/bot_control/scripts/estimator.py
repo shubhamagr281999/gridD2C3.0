@@ -2,29 +2,27 @@
 
 import rospy
 import cv2
-from math import sqrt, atan, pi, floor, ceil
-from sensor_msgs.msg import Image
+from math import sqrt, atan, pi, ceil
 import numpy as np
-from cv_bridge import CvBridge, CvBridgeError
 from geometry_msgs.msg import Pose, PoseArray
-# from bot_control.msg import Poses
 
 class pose_publisher:
     def __init__(self):
         self.n_agents=4
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
+
+        self.control_rate=rospy.Rate(10)
+
+        #publisher
+        self.pub_poses=rospy.Publisher('/poses',PoseArray,queue_size=1)
         self.poses=PoseArray()
         self.initialize_pose_msg()
-        self.bridge = CvBridge()
-        self.control_rate=rospy.Rate(10)
-        self.pub_poses=rospy.Publisher('/poses',PoseArray,queue_size=1)
-        # self.image_sub=rospy.Subscriber('/image',Image,self.callback_opencv,queue_size=1)
+
+        # subscriber
         self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
         # self.vid = cv2.VideoCapture(0)
-        
-        self.img_base=cv2.imread('/home/shubham/catkin_ws/src/gridD2C3.0/software/bot_control/scripts/maze.png')
-        self.img_base=cv2.cvtColor(self.img_base, cv2.COLOR_BGR2GRAY)
+
 
     def initialize_current_pose(self):
         for i in range(self.n_agents):
