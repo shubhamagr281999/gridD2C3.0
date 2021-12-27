@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
 import rospy
-import time
+from math import ceil,pi
 import pandas as pd
 from time import sleep
 from std_msgs.msg import UInt8
-from bot_control.msg import StartGoal, CompletePlan, PathArray, Poses
-from geometry_msgs.msg import Point
+from bot_control.msg import StartGoal, CompletePlan, PathArray
+from geometry_msgs.msg import PoseArray, PointStamped
 import numpy as np
 
 class destination_assign:
@@ -31,11 +31,11 @@ class destination_assign:
         # print(self.induct1)
 
     def assign(self,LS):
-        if LS == 1:
+        if LS == 0:
             dest_id = self.key_list[self.val_list.index(self.induct1[0])]
             self.induct1.pop(0)
             return dest_id
-        elif LS == 2:
+        elif LS == 1:
             dest_id = self.key_list[self.val_list.index(self.induct2[0])]
             self.induct2.pop(0)
             return dest_id
@@ -51,15 +51,6 @@ class start_goal_publisher:
         self.lossfunction_para2= 1
         self.dest_assigner = destination_assign()
 
-        #subscribers
-        self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
-        self.new_plan_sub=rospy.Subscriber('/new_plan',UInt8,self.new_plan_callback,queue_size=10)
-
-        # publishers
-        self.dest_pub=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=10)
-        self.startgoal= StartGoal()
-        self.one_step_goal_pub=rospy.Publisher('/one_step_goal',PointStamped,queue_size=10)    
-
         # maze status/locations variables
         self.delivery_zone_occupancy = np.zeros([9,4]) -1
         self.x0 = 0 #it is the orgin that is top let corner of image
@@ -71,20 +62,28 @@ class start_goal_publisher:
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
         self.bot_status = np.zeros(self.n_agents)
-        self.queue_LS_actual = np.zeros([2,6])
-        self.queue_LS_pseudo_actual= np.zeros([2,6])
-        self.queue_LS_assigned = np.zeros([2,6])
-        self.LS_assigned = np.array([self.n_agents])
-        self.initilize_LS_queue()
-        
-        
+        self.flipStatus = np.zeros(self.n_agents)
+        self.queue_LS_actual = np.zeros([2,6])-1
+        self.queue_LS_pseudo_actual= []
+        self.queue_LS_assigned = []
+        self.LS_assigned = np.zeros(self.n_agents)
+        self.initilize_LS_queue()    
 
+        #subscribers
+        self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
+        # self.new_plan_sub=rospy.Subscriber('/new_plan',UInt8,self.new_plan_callback,queue_size=10)
 
+        # publishers
+        self.dest_pub=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=10)
+        self.startgoal= StartGoal()
+        self.one_step_goal_pub=rospy.Publisher('/one_step_goal',PointStamped,queue_size=10)  
+        
         self.m_LS1= (self.n_agents % 2)
-        self.m_LS2= (self.nagents - (self.n_agents%2)) #check this
+        self.m_LS2= (self.n_agents - (self.n_agents%2)) #check this
         # print(self.grid_locations)
 
     def current_state_callback(self,msg):
+        bot_found=np.zeros([2,6])
         for i in range(self.n_agents):
             self.current_pose[i][0]=msg.poses[i].position.x
             self.current_pose[i][1]=msg.poses[i].position.y
@@ -95,40 +94,47 @@ class start_goal_publisher:
                 if(self.current_pose[i][1]<4.5):
                     if(self.current_pose[i][0]<28.5 and self.current_pose[i][0]>26.5):
                         self.queue_LS_actual[0][0]=i
+                        bot_found[0][0]=1
                     elif (self.current_pose[i][0]<58.5 and self.current_pose[i][0]>56.5):
                         self.queue_LS_actual[1][0]=i
+                        bot_found[1][0]=1
                 if(self.current_pose[i][1]>7.5):
                     for j in range(5):
-                        if(self.current_pose[j][0]<(6*i+4.5) and self.current_pose[j][0]>(6*i+1.5)):
+                        if(self.current_pose[i][0]<(6*j+4.5) and self.current_pose[i][0]>(6*j+1.5)):
                             self.queue_LS_actual[0][5-j]=i
+                            bot_found[0][5-j]=1
                             break
-                        if(self.current_pose[j][0]<(6*(i+9)+4.5) and self.current_pose[j][0]>(6*(i+9)+1.5)):
+                        if(self.current_pose[i][0]<(6*(j+9)+4.5) and self.current_pose[i][0]>(6*(j+9)+1.5)):
                             self.queue_LS_actual[1][j+1]=i
+                            bot_found[1][j+1]=1
                             break
+        not_bot=np.where(bot_found==0)
+        for i in range(np.shape(not_bot)[1]):
+            self.queue_LS_actual[not_bot[0][i]][[1][i]]=-1
+
+
 
     def initilize_LS_queue(self):
         for i in range(self.n_agents):
             if(i<int(ceil(self.n_agents/2.0))):
                 if(i==0):
-                    self.queue_LS_actual[0][i]=i
-                    self.queue_LS_pseudo_actual[0][i]=i
-                    self.queue_LS_assigned[0][i]=i
+                    self.queue_LS_actual[0][i]=int(i)
                 else :
-                    self.queue_LS_actual[0][i+1]=i
-                    self.queue_LS_pseudo_actual[0][i+1]=i
-                    self.queue_LS_assigned[0][i+1]=i
+                    self.queue_LS_actual[0][i+1]=int(i)
                 self.LS_assigned[i]=0
             else:
                 k=i-int(ceil(self.n_agents/2.0))
                 if(k==0):
-                    self.queue_LS_actual[1][0]=i
-                    self.queue_LS_pseudo_actual[1][0]=i
-                    self.queue_LS_assigned[1][0]=i
+                    self.queue_LS_actual[1][0]=int(i)
                 else:
-                    self.queue_LS_actual[1][k+1]=i
-                    self.queue_LS_pseudo_actual[1][k+1]=i
-                    self.queue_LS_assigned[1][k+1]=i
+                    self.queue_LS_actual[1][k+1]=int(i)
                 self.LS_assigned[i]=1
+
+        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[0])
+        self.queue_LS_assigned.append(self.queue_LS_actual[0])
+
+        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[1])
+        self.queue_LS_assigned.append(self.queue_LS_actual[1])
 
     def initialize_current_pose(self):
         for i in range(self.n_agents):
@@ -180,7 +186,18 @@ class start_goal_publisher:
             a.append([self.x0 + (9+i)*6 + 3,self.y0 + 9])
         k.append(a)
         return k    
-
+   
+    def preffered_LS(self, bot_num):
+        Loss_function_LS1 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[0][4][0])^2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[0][4][1])^2) 
+        Loss_function_LS2 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[1][4][0])^2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[1][4][1])^2)
+        if (Loss_function_LS1 > Loss_function_LS2):
+            self.LS_assigned[bot_num]= 1
+            self.queue_LS_assigned[1].append(bot_num) #change logic here cant append rather have to check for kast empty element
+            return 1
+        else :
+            self.LS_assigned[bot_num]= 0
+            self.queue_LS_assigned[0].append(bot_num)
+            return 0
     #sequnce of operatrion
     def next_task_callback(self,msg):
         self.task_msg = msg
@@ -248,13 +265,14 @@ class start_goal_publisher:
                     self.m_LS2=6
                     
                     while i<6:
-                        if (queue_LS1_pseudo_actual[5-i][0] ==100]:
+                        if (queue_LS1_pseudo_actual[5-i][0] ==100):
                             self.m_LS1 = 5-i
                         else:
                             break
+                            # prin('here')
                     
                     while j<6:
-                        if (queue_LS2_pseudo_actual[5-j][0] ==100]:
+                        if (queue_LS2_pseudo_actual[5-j][0] ==100):
                             self.m_LS2 = 5-j
                         else:
                             break
@@ -283,15 +301,18 @@ class start_goal_publisher:
                     if (self.LS_assigned[bot_num][0]==1):
 
                         if (self.queue_LS1_actual.indexOf(bot_num, 0) == 0):
+                            print('hie')
                             #Task done
                         elif (self.queue_LS1_actual[self.queue_LS1_actual.indexOf(bot_num, 0)-1][0]== 100):
-                            
+                            print('hie')
                             # move a step forward
                         else :
+                            print('hie')
                             #stay and wait
                 
 
                     elif(self.LS_assigned[bot_num][0]==2):
+                        print('hie')
 
 
                     self.task_msg.task[i] = 1    #task has been completed :Reached the top of queue
@@ -301,52 +322,9 @@ class start_goal_publisher:
                     self.update_status.publish(self.status_msg)
 
 
-
-    def dest_callback(self,msg):
-            for i in range(4):
-                if self.delivery_zone_occupancy[msg.bot_num.data][i]==-1:
-                    self.delivery_zone_occupancy[msg.bot_num.data][i] = msg.bot_num.data
-                    self.startgoal.bot_num.data = [msg.bot_num.data]
-                    self.startgoal.start_x.data = [self.current_pose[msg.bot_num.data][0]]
-                    self.startgoal.start_y.data = [self.current_pose[msg.bot_num.data][1]]
-                    # add direction here
-                    self.startgoal.goal_x.data = [self.grid_locations[msg.dest_id.data][i][0]]
-                    self.startgoal.goal_y.data = [self.grid_locations[msg.dest_id.data][i][1]]
-                    self.startgoal.goal_d.data = [0]
-                    dest_pub.publish(self.startgoal)
-                    break
-        
-    def pose_callback(self,msg):
-        for i in range(self.n_agents):
-            self.current_pose[i][0]=msg.posei[i].x
-            self.current_pose[i][1]=msg.posei[i].y
-            self.current_pose[i][2]=msg.posei[i].z
-
-    def go_to_goal(self,bot_num,x,y,theta):
-        msg=Point()
-        msg.x=(self.x)
-        msg.y=self.y
-        msg.z=bot_num
-        self.pub_goal.publish(msg)
-
-    def preffered_LS(self, bot_num)
-        Loss_function_LS1 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.grid_locations_LS1[0])^^2 + (self.current_pose[bot_num][1] - self.grid_locations_LS1[1])^^2) 
-        Loss_function_LS2 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.grid_locations_LS2[0])^^2 + (self.current_pose[bot_num][1] - self.grid_locations_LS2[1])^^2)
-        if (Loss_function_LS1 > Loss_function_LS2)
-            self.LS_assigned[bot_num][0]= 2
-            self.queue_LS_assigned[0]=np.append(self.queue_LS2_assigned, bot_num) #change logic here cant append rather have to check for kast empty element
-            return 2
-        else
-            self.LS_assigned[bot_num][0]= 1
-            self.queue_LS_assigned[1]=np.append(self.queue_LS1_assigned, bot_num)
-            return 1
-
-
 if __name__ == '__main__':
     print("here ")
     rospy.init_node('Start_goal_publisher')
     rospy.loginfo("Start goal_publisher created | decides gaol based on the logic defined")
     start_goal_pub_obj=start_goal_publisher()
-    rospy.init_node('destination_assign')
-    rospy.loginfo('Assigner node created')
     rospy.spin()
