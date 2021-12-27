@@ -11,7 +11,6 @@ class goal_publisher:
     def __init__(self):
         # self.rate=rospy.Rate(0.5)
         self.n_agents=1
-        # self.current_pose=np.zeros([self.n_agents,3])
         self.goal_pose=np.zeros([self.n_agents,3])
         self.turning_points=self.empty_list(self.n_agents)
         self.need_new_plan=np.zeros(self.n_agents)
