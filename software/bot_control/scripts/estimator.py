@@ -11,7 +11,6 @@ class pose_publisher:
         self.n_agents=4
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
-
         self.control_rate=rospy.Rate(10)
 
         #publisher
@@ -44,6 +43,7 @@ class pose_publisher:
                 else :
                     self.current_pose[i][1]=9
                     self.current_pose[i][2]=pi
+
     def initialize_pose_msg(self):
         temp_poses=[]
         for i in range(self.n_agents):

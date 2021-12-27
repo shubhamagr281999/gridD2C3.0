@@ -58,6 +58,8 @@ class start_goal_publisher:
         self.grid_locations = self.grid_location_assigner()  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
         self.LS_queue_locations = self.LS_location_assinger() #3D array [LS_num][one of 6 pose][0 for x | 1 for y]
 
+        print(self.grid_locations)
+        print(self.LS_queue_locations)
         # bot staus variables
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
@@ -110,9 +112,8 @@ class start_goal_publisher:
                             break
         not_bot=np.where(bot_found==0)
         for i in range(np.shape(not_bot)[1]):
-            self.queue_LS_actual[not_bot[0][i]][[1][i]]=-1
-
-
+            self.queue_LS_actual[not_bot[0][i]][not_bot[1][i]]=-1
+        # print(self.queue_LS_actual)
 
     def initilize_LS_queue(self):
         for i in range(self.n_agents):
@@ -130,11 +131,15 @@ class start_goal_publisher:
                     self.queue_LS_actual[1][k+1]=int(i)
                 self.LS_assigned[i]=1
 
-        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[0])
-        self.queue_LS_assigned.append(self.queue_LS_actual[0])
+        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[0][0:int(ceil(self.n_agents/2.0))+1])
+        self.queue_LS_assigned.append(self.queue_LS_actual[0][0:int(ceil(self.n_agents/2.0))+1])
 
-        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[1])
-        self.queue_LS_assigned.append(self.queue_LS_actual[1])
+        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[1][0:self.n_agents - int(ceil(self.n_agents/2.0))+1])
+        self.queue_LS_assigned.append(self.queue_LS_actual[1][0:self.n_agents - int(ceil(self.n_agents/2.0))+1])
+        # print(self.queue_LS_actual)
+        # print(self.queue_LS_pseudo_actual)
+        # print(self.queue_LS_assigned)
+        # print(self.LS_assigned)
 
     def initialize_current_pose(self):
         for i in range(self.n_agents):
