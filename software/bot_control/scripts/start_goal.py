@@ -47,12 +47,12 @@ class start_goal_publisher:
         self.rate=rospy.Rate(10)
         self.n_agents=4
         
-        self.lossfunction_para1= 1  #weighted loss function-LS selection 
-        self.lossfunction_para2= 1
-        self.dest_assigner = destination_assign()
+        self.lossfunction_para1= 1  #weighted loss function-LS selection  para1 for distance
+        self.lossfunction_para2= 1 # para2 for queue size
+        self.dest_assigner = destination_assign() #assign function pof this class takes LS_num as param and return dest id
 
         # maze status/locations variables
-        self.delivery_zone_occupancy = np.zeros([9,4]) -1
+        self.delivery_block_occupancy=np.zeros([9,4]) -1
         self.x0 = 0 #it is the orgin that is top let corner of image
         self.y0 = 0 #it is the orgin that is top let corner of image
         self.grid_locations = self.grid_location_assigner()  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
@@ -62,14 +62,12 @@ class start_goal_publisher:
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
         self.bot_status = np.zeros(self.n_agents)
-        self.flipStatus = np.zeros(self.n_agents)
         self.queue_LS_actual = np.zeros([2,6])-1
         self.queue_LS_pseudo_actual= []
         self.queue_LS_assigned = []
         self.LS_assigned = np.zeros(self.n_agents)
         self.initilize_LS_queue()
-        self.assigned_dest_location=np.zeros([self.n_agents,3])
-        self.dest_block_occupancy=np.zeros([9,4])    
+        self.assigned_dest_location=np.zeros([self.n_agents,3])            
 
         #subscribers
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
@@ -210,8 +208,8 @@ class start_goal_publisher:
             return 0
 
     def preffered_dest_block(self,dest_id):
-        k=np.where(self.dest_block_occupancy[dest_id]==-1)[0]
-        if(k>0):
+        k=np.where(self.delivery_block_occupancy[dest_id]==-1)[0]
+        if(len(k)>0):
             return k[0]
         else :
             print('All delivery zones assigned need to wait')
@@ -244,7 +242,7 @@ class start_goal_publisher:
             self.queue_LS_assigned[LS_].insert(len(self.queue_LS_pseudo_actual[LS_])-1,msg.data)
             self.bot_status[msg.data]=0
 
-        if(self.bot_status[msg.data]==0 or self.bot_status[msg.data]==1): #status was 0 it means it has reached in the LS_queue
+        elif(self.bot_status[msg.data]==0 or self.bot_status[msg.data]==1): #status was 0 it means it has reached in the LS_queue
             self.bot_status[msg.data]=1
             LS_=self.LS_assigned[msg.data]
             k=np.where(self.queue_LS_actual[LS_]==msg.data)[0][0]
@@ -264,11 +262,12 @@ class start_goal_publisher:
                 else:
                     self.one_step_publish_([-100,-100],100,msg.data)
 
-        if(self.bot_status[msg.data]==2): #it was halting at LS for parcel and now it needs to go to destination
+        elif(self.bot_status[msg.data]==2): #it was halting at LS for parcel and now it needs to go to destination
             LS_=self.LS_assigned[msg.data]
             self.LS_assigned[msg.data]=-1
             dest_id=self.dest_assigner.assign(LS_)
-            dest_block=self.preffered_dest_block(dest_id) #if -1 if retuned code for it -------------------------------------------------------------
+            dest_block=self.preffered_dest_block(dest_id) #if -1 if retuned | code for it -------------------------------------------------------------
+            self.delivery_block_occupancy[dest_id][dest_block]=msg.data
             self.bot_status[msg.data]=3
             flip_direction=0
             if(dest_block==0 or dest_block==2):
@@ -276,145 +275,26 @@ class start_goal_publisher:
             self.assigned_dest_location[msg.data]=self.grid_locations[dest_id][dest_block].tolist().append(flip_direction)
             self.CBS_plan()
 
-        if(self.bot_status[msg.data]==3): # it was going from LS-dest, It would have reached there. Need to align for parcel drop
+        elif(self.bot_status[msg.data]==3): # it was going from LS-dest, It would have reached there. Need to align for parcel drop
             self.bot_status[msg.data]=4
             self.one_step_publish_(self.assigned_dest_location[msg.data],self.assigned_dest_location[msg.data][2],msg.data)
 
-        if(self.bot_status[msg.data]==4): #bot has aligend itself now need to drop parcel
+        elif(self.bot_status[msg.data]==4): #bot has aligend itself now need to drop parcel
             self.bot_status[msg.data]=5
             self.one_step_publish_([-100,-100],100,msg.data)
             msg_flip=UInt8()
             msg_flip.data=msg.data
             self.flipMotor_pub.publish(msg_flip)
             
-        if(self.bot_status[msg.data]==5): #parcel has been dropped need to go back to one of the LS
+        elif(self.bot_status[msg.data]==5): #parcel has been dropped need to go back to one of the LS
+            # self.delivery_block_occupancy[][] ---------------------------------------------------------------
             LS_=self.preffered_LS(msg.data)
             self.bot_status[msg.data]=6
             self.assigned_dest_location[msg.data]=self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1].tolist().append(100)
+            self.assigned_dest_location[msg.data][1]=self.assigned_dest_location[msg.data][1]+6
+            self.queue_LS_assigned[LS_].append(msg.data)
+            self.LS_assigned[msg.data]=LS_
             self.CBS_plan()
-
-    #sequnce of operatrion
-    def next_task_callback(self,msg):
-        self.task_msg = msg
-        for i in range(self.n_agents):
-            if (self.task_msg.task[i] == 0): # 0 means task is assigned, 1 means task is done
-
-                if (self.status_msg.status[i] == 0):
-                    #the bot is at the top of queue in LS waiting for parcel and destination
-                    self.task_msg.task[i] = 1    #task has been completed : we gave it the destination
-                    self.update_task.publish(self.task_msg)
-
-                    self.status_msg.status[i] = 1  #updated the status of the bot
-                    self.update_status.publish(self.status_msg)
-
-                    time.sleep(5) # TUNE LATER
-
-                    if (LS_assigned[bot_num][0] == 1):
-                        #PUT A CHECK HERE!! 
-                        self.queue_LS1_assigned = np.delete(self.queue_LS1_assigned, [0])
-                        self.queue_LS1_pseudo_actual= np.delete(self.queue_LS1_pseudo_actual, [0])
-                        
-                    elif (LS_assigned[bot_num][0] == 2):
-                        #PUT A CHECK HERE!!
-                        self.queue_LS2_assigned= np.delete(queue_LS2_assigned, [0])
-                        self.queue_LS2_pseudo_actual= np.delete(self.queue_LS2_pseudo_actual, [0])
-                        
-
-
-
-                elif (self.status_msg.status[i] == 1):
-                    #the bot is on the way to drop the parcel
-                    self.task_msg.task[i] = 1    #task has been completed: PID control to the destination
-                    self.update_task.publish(self.task_msg)
-
-                    self.status_msg.status[i] = 2  #updated the status of the bot
-                    self.update_status.publish(self.status_msg)
-
-                elif (self.status_msg.status[i] == 2):
-                    #the bot is aligning itself to drop the parcel
-                    self.task_msg.task[i] = 1    #task has been completed: Alignment & Flipper
-                    self.update_task.publish(self.task_msg)
-
-                    self.status_msg.status[i] = 3  #updated the status of the bot
-                    self.update_status.publish(self.status_msg)
-
-                elif (self.status_msg.status[i] == 3):
-                    #bot is assigned loading station and goes to the side flank of the queue
-                    if (self.preffered_LS(bot_num) == 1):
-                        return [self.x0 + 1.5 - self.queue_LS1_assigned.indexOf(bot_num, 0), self.y0 - 1.5]
-                        #PUBLISH!!
-                    elif (self.preffered_LS(bot_num) == 2):
-                        return [self.x0 + 6.5 + self.queue_LS2_assigned.indexOf(bot_num,0), self.y0 -1.5] 
-                        #PUBLISH!!
-                    # MODIFY THIS PART LATER
-
-                    self.task_msg.task[i] = 1    #task has been completed : reached side flank
-                    self.update_task.publish(self.task_msg)
-
-                    self.status_msg.status[i] = 4  #updated the status of the bot
-                    self.update_status.publish(self.status_msg)
-
-                elif (self.status_msg.status[i] == 4):
-                    #the bot goes to the queue for assigned loading station
-                    self.m_LS1=6
-                    self.m_LS2=6
-                    
-                    while i<6:
-                        if (queue_LS1_pseudo_actual[5-i][0] ==100):
-                            self.m_LS1 = 5-i
-                        else:
-                            break
-                            # prin('here')
-                    
-                    while j<6:
-                        if (queue_LS2_pseudo_actual[5-j][0] ==100):
-                            self.m_LS2 = 5-j
-                        else:
-                            break
-
-                    if (LS_assigned[bot_num][0] == 1):
-                        self.queue_LS1_pseudo_actual[self.m_LS1][0] = bot_num
-                        return [self.x0 - 6.5 + self.m_LS1,self.y0-2.5]
-                        #PUBLISH
-
-                    elif (LS_assigned[bot_num][0]==2):
-                        self.queue_LS2_pseudo_actual[self.m_LS2][0] = bot_num
-                        return [self.x0 +6.5  + self.m_LS2,self.y0-2.5]
-                        #PUBLISH
-
-
-                    self.task_msg.task[i] = 1    #task has been completed : reached the queue
-                    self.update_task.publish(self.task_msg)
-
-                    self.status_msg.status[i] = 5  #updated the status of the bot
-                    self.update_status.publish(self.status_msg)
-
-
-                elif (self.status_msg.status[i] == 5):
-                    #the bot is in the queue at loading station
-
-                    if (self.LS_assigned[bot_num][0]==1):
-
-                        if (self.queue_LS1_actual.indexOf(bot_num, 0) == 0):
-                            print('hie')
-                            #Task done
-                        elif (self.queue_LS1_actual[self.queue_LS1_actual.indexOf(bot_num, 0)-1][0]== 100):
-                            print('hie')
-                            # move a step forward
-                        else :
-                            print('hie')
-                            #stay and wait
-                
-
-                    elif(self.LS_assigned[bot_num][0]==2):
-                        print('hie')
-
-
-                    self.task_msg.task[i] = 1    #task has been completed :Reached the top of queue
-                    self.update_task.publish(self.task_msg)
-
-                    self.status_msg.status[i] = 0  #updated the status of the bot
-                    self.update_status.publish(self.status_msg)
 
 
 if __name__ == '__main__':
