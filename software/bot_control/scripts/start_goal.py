@@ -58,8 +58,6 @@ class start_goal_publisher:
         self.grid_locations = self.grid_location_assigner()  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
         self.LS_queue_locations = self.LS_location_assinger() #3D array [LS_num][one of 6 pose][0 for x | 1 for y]
 
-        print(self.grid_locations)
-        print(self.LS_queue_locations)
         # bot staus variables
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
@@ -69,20 +67,28 @@ class start_goal_publisher:
         self.queue_LS_pseudo_actual= []
         self.queue_LS_assigned = []
         self.LS_assigned = np.zeros(self.n_agents)
-        self.initilize_LS_queue()    
+        self.initilize_LS_queue()
+        self.assigned_dest_location=np.zeros([self.n_agents,3])
+        self.dest_block_occupancy=np.zeros([9,4])    
 
         #subscribers
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
-        # self.new_plan_sub=rospy.Subscriber('/new_plan',UInt8,self.new_plan_callback,queue_size=10)
+        self.new_plan_sub=rospy.Subscriber('/new_plan',UInt8,self.new_plan_callback,queue_size=10)
 
         # publishers
         self.dest_pub=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=10)
-        self.startgoal= StartGoal()
-        self.one_step_goal_pub=rospy.Publisher('/one_step_goal',PointStamped,queue_size=10)  
+        self.one_step_goal_pub=rospy.Publisher('/one_step_goal',PointStamped,queue_size=10)
+        self.one_step_msg=PointStamped()
+        self.flipMotor_pub=rospy.Publisher('/flipmotor',UInt8,queue_size=10)  
         
-        self.m_LS1= (self.n_agents % 2)
-        self.m_LS2= (self.n_agents - (self.n_agents%2)) #check this
         # print(self.grid_locations)
+
+    def one_step_publish_(self,point,yaw,bot_num):
+        self.one_step_msg.header.seq=bot_num
+        self.one_step_msg.point.x=point[0]
+        self.one_step_msg.point.y=point[1]
+        self.one_step_msg.point.z=yaw
+        self.one_step_goal_pub.publish(self.one_step_msg)
 
     def current_state_callback(self,msg):
         bot_found=np.zeros([2,6])
@@ -131,14 +137,14 @@ class start_goal_publisher:
                     self.queue_LS_actual[1][k+1]=int(i)
                 self.LS_assigned[i]=1
 
-        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[0][0:int(ceil(self.n_agents/2.0))+1])
-        self.queue_LS_assigned.append(self.queue_LS_actual[0][0:int(ceil(self.n_agents/2.0))+1])
+        self.queue_LS_pseudo_actual.append((self.queue_LS_actual[0][2:int(ceil(self.n_agents/2.0))+1]).tolist())
+        self.queue_LS_assigned.append((self.queue_LS_actual[0][2:int(ceil(self.n_agents/2.0))+1]).tolist())
 
-        self.queue_LS_pseudo_actual.append(self.queue_LS_actual[1][0:self.n_agents - int(ceil(self.n_agents/2.0))+1])
-        self.queue_LS_assigned.append(self.queue_LS_actual[1][0:self.n_agents - int(ceil(self.n_agents/2.0))+1])
-        # print(self.queue_LS_actual)
-        # print(self.queue_LS_pseudo_actual)
-        # print(self.queue_LS_assigned)
+        self.queue_LS_pseudo_actual.append((self.queue_LS_actual[1][2:self.n_agents - int(ceil(self.n_agents/2.0))+1]).tolist())
+        self.queue_LS_assigned.append((self.queue_LS_actual[1][2:self.n_agents - int(ceil(self.n_agents/2.0))+1]).tolist())
+        print(self.queue_LS_actual)
+        print(self.queue_LS_pseudo_actual)
+        print(self.queue_LS_assigned)
         # print(self.LS_assigned)
 
     def initialize_current_pose(self):
@@ -164,17 +170,16 @@ class start_goal_publisher:
 
     def grid_location_assigner(self):
         k = []
-        x0_=self.x0+15
-        y0_=self.y0+21
+        x0_=self.x0+18
+        y0_=self.y0+24
         for i in range(9):
             a = []
             x=x0_ + (i/3)*24
             y=y0_ + (i%3)*24
-            for j in range(4):
-                if j < 2:
-                    a.append([x + ((-1)**j)*3,y-9])
-                else:
-                    a.append([x-9,y + ((-1)**(j+1))*3])
+            a.append([x - 9,y-3])
+            a.append([x-3,y + 9])
+            a.append([x-9,y + 3])
+            a.append([x+3,y + 9])
             k.append(a)
         return k
 
@@ -203,6 +208,91 @@ class start_goal_publisher:
             self.LS_assigned[bot_num]= 0
             self.queue_LS_assigned[0].append(bot_num)
             return 0
+
+    def preffered_dest_block(self,dest_id):
+        k=np.where(self.dest_block_occupancy[dest_id]==-1)[0]
+        if(k>0):
+            return k[0]
+        else :
+            print('All delivery zones assigned need to wait')
+            return -1
+
+    def CBS_plan(self):
+        msg=StartGoal()
+        k=np.where(self.bot_status==3)[0]
+        n=np.where(self.bot_status==6)[0]
+        k=np.concatenate([k,n]).tolist()
+        for i in k:
+            msg.bot_num.append(i)
+            start_pose=self.tranform(self.current_pose[i])
+            msg.start_x.append(start_pose[0])
+            msg.start_y.append(start_pose[1])
+            msg.start_d.append(start_pose[2])
+            goal_pose=self.tranform(self.assigned_dest_location[i])
+            msg.goal_x.append(goal_pose[0])
+            msg.goal_y.append(goal_pose[1])
+            msg.goal_d.append(goal_pose[2])
+        self.dest_pub.publish(msg)
+
+    def new_plan_callback(self,msg):
+        if(self.bot_status[msg.data]==6): #status was going to LS assigned it reached means now LS_assigned to LS_psuedo needs to be given
+            LS_=self.LS_assigned[msg.data]
+            self.one_step_publish_(self.LS_queue_locations[LS_][len(self.queue_LS_pseudo_actual[LS_])+2],100,msg.data)
+            self.queue_LS_pseudo_actual[LS_].append(msg.data)
+            k=np.where(np.array(self.queue_LS_assigned[LS_])==msg.data)[0][0]
+            self.queue_LS_assigned[LS_].pop(k)
+            self.queue_LS_assigned[LS_].insert(len(self.queue_LS_pseudo_actual[LS_])-1,msg.data)
+            self.bot_status[msg.data]=0
+
+        if(self.bot_status[msg.data]==0 or self.bot_status[msg.data]==1): #status was 0 it means it has reached in the LS_queue
+            self.bot_status[msg.data]=1
+            LS_=self.LS_assigned[msg.data]
+            k=np.where(self.queue_LS_actual[LS_]==msg.data)[0][0]
+            if(k==2):
+                if(self.queue_LS_actual[LS_][0]==-1 and self.queue_LS_actual[LS_][1]==-1):
+                    self.one_step_publish_(self.LS_queue_locations[LS_][1],100,msg.data)
+                    self.queue_LS_pseudo_actual[LS_].pop(0)
+                    self.queue_LS_assigned[LS_].pop(0)
+            elif(k==1):
+                self.one_step_publish_(self.LS_queue_locations[LS_][0],100,msg.data)
+            elif(k==0):
+                self.one_step_publish_([-100,-100],100,msg.data)
+                self.bot_status[msg.data]=2
+            else:
+                if(self.queue_LS_actual[k-1]==-1):
+                    self.one_step_publish_(self.LS_queue_locations[LS_][k-1],100,msg.data)
+                else:
+                    self.one_step_publish_([-100,-100],100,msg.data)
+
+        if(self.bot_status[msg.data]==2): #it was halting at LS for parcel and now it needs to go to destination
+            LS_=self.LS_assigned[msg.data]
+            self.LS_assigned[msg.data]=-1
+            dest_id=self.dest_assigner.assign(LS_)
+            dest_block=self.preffered_dest_block(dest_id) #if -1 if retuned code for it -------------------------------------------------------------
+            self.bot_status[msg.data]=3
+            flip_direction=0
+            if(dest_block==0 or dest_block==2):
+                flip_direction=pi/2
+            self.assigned_dest_location[msg.data]=self.grid_locations[dest_id][dest_block].tolist().append(flip_direction)
+            self.CBS_plan()
+
+        if(self.bot_status[msg.data]==3): # it was going from LS-dest, It would have reached there. Need to align for parcel drop
+            self.bot_status[msg.data]=4
+            self.one_step_publish_(self.assigned_dest_location[msg.data],self.assigned_dest_location[msg.data][2],msg.data)
+
+        if(self.bot_status[msg.data]==4): #bot has aligend itself now need to drop parcel
+            self.bot_status[msg.data]=5
+            self.one_step_publish_([-100,-100],100,msg.data)
+            msg_flip=UInt8()
+            msg_flip.data=msg.data
+            self.flipMotor_pub.publish(msg_flip)
+            
+        if(self.bot_status[msg.data]==5): #parcel has been dropped need to go back to one of the LS
+            LS_=self.preffered_LS(msg.data)
+            self.bot_status[msg.data]=6
+            self.assigned_dest_location[msg.data]=self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1].tolist().append(100)
+            self.CBS_plan()
+
     #sequnce of operatrion
     def next_task_callback(self,msg):
         self.task_msg = msg
