@@ -9,10 +9,11 @@ import numpy as np
 class goal_publisher:
     def __init__(self):
         # self.rate=rospy.Rate(0.5)
-        self.n_agents=1
+        self.n_agents=4
         self.goal_pose=np.zeros([self.n_agents,3])
         self.turning_points=self.empty_list(self.n_agents)
         self.need_new_plan=np.zeros(self.n_agents)
+        self.yaw=np.zeros(self.n_agents)+100
 
         # publishers
         self.pub_goal=rospy.Publisher('/goal_point',pose_bot,queue_size=10)
@@ -22,6 +23,7 @@ class goal_publisher:
         self.plans_callback=rospy.Subscriber("/cbs/plan",CompletePlan,self.plan_callback,queue_size=10)
         self.sub_flag_pid = rospy.Subscriber("/flag_pid",UInt8,self.flag_pid_callback,queue_size=10)
         self.one_step_goal = rospy.Subscriber("/one_step_goal",pose_bot,self.one_step_callback,queue_size=10)
+
 
 
     def empty_list(self,i):
@@ -42,7 +44,8 @@ class goal_publisher:
             self.turning_point(xi,yi,di,i.bot_num)
 
         for i in msg.agent :
-            self.goal(i.bot_num,100)
+            self.yaw[i.bot_num]=100
+            self.goal(i.bot_num)
 
     def turning_point(self,x,y,d,bot_num):
         turnpoints=[]
@@ -69,31 +72,34 @@ class goal_publisher:
         self.goal(msg.data)        
 
     def one_step_callback(self,msg):
-        self.turning_points[msg.header.seq]=[[msg.x,msg.y]]
-        self.goal(msg.bot_num,msg.yaw)
+        self.turning_points[msg.bot_num]=[[msg.x,msg.y]]
+        self.yaw[msg.bot_num]=msg.yaw
+        self.goal(msg.bot_num)
+
 
 
     def goal_pub(self,bot_num,yaw):
-        msg=Point()
+        msg=pose_bot()
 
         msg.x=self.goal_pose[bot_num][0]
         msg.y=self.goal_pose[bot_num][1]
-        msg.z=yaw #100 is large impratical yaw just to indicate final yaw is not of significance
+        msg.yaw=yaw #100 is large impratical yaw just to indicate final yaw is not of significance
         msg.bot_num=bot_num
         self.pub_goal.publish(msg)
 
-    def goal(self,bot_num,yaw):
+    def goal(self,bot_num):
         if(len(self.turning_points[bot_num])>0):
-            self.goal_pose[bot_num][0]=self.turning_points[i][0][0]
-            self.goal_pose[bot_num][1]=self.turning_points[i][0][1]
+            self.goal_pose[bot_num][0]=self.turning_points[bot_num][0][0]
+            self.goal_pose[bot_num][1]=self.turning_points[bot_num][0][1]
             self.turning_points[bot_num].pop(0)
             self.need_new_plan[bot_num]=0
-            self.goal_pub(bot_num,yaw)
+            self.goal_pub(bot_num,self.yaw[bot_num])
             
         else:
             pub_msgs=UInt8()
             pub_msgs.data=bot_num
             self.pub_new_plan.publish(pub_msgs)
+            print('bot :',bot_num, ' needs new plan')
 
 
 if __name__ == '__main__':

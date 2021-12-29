@@ -5,7 +5,7 @@ from math import ceil,pi,sqrt
 import pandas as pd
 from time import sleep
 from std_msgs.msg import UInt8
-from bot_control.msg import StartGoal, CompletePlan, PathArray
+from bot_control.msg import StartGoal, CompletePlan, PathArray, pose_bot
 from geometry_msgs.msg import PoseArray, PointStamped
 import numpy as np
 
@@ -124,12 +124,14 @@ class start_goal_publisher:
             if(i<int(ceil(self.n_agents/2.0))):
                 if(i==0):
                     self.queue_LS_actual[0][i]=int(i)
+                    self.bot_status[i]=2
                 else :
                     self.queue_LS_actual[0][i+1]=int(i)
                 self.LS_assigned[i]=0
             else:
                 k=i-int(ceil(self.n_agents/2.0))
                 if(k==0):
+                    self.bot_status[i]=2
                     self.queue_LS_actual[1][0]=int(i)
                 else:
                     self.queue_LS_actual[1][k+1]=int(i)
@@ -140,9 +142,9 @@ class start_goal_publisher:
 
         self.queue_LS_pseudo_actual.append((self.queue_LS_actual[1][2:self.n_agents - int(ceil(self.n_agents/2.0))+1]).tolist())
         self.queue_LS_assigned.append((self.queue_LS_actual[1][2:self.n_agents - int(ceil(self.n_agents/2.0))+1]).tolist())
-        print(self.queue_LS_actual)
-        print(self.queue_LS_pseudo_actual)
-        print(self.queue_LS_assigned)
+        # print(self.queue_LS_actual)
+        # print(self.queue_LS_pseudo_actual)
+        # print(self.queue_LS_assigned)
         # print(self.LS_assigned)
 
     def initialize_current_pose(self):
@@ -246,8 +248,9 @@ class start_goal_publisher:
         self.dest_pub.publish(msg)
 
     def new_plan_callback(self,msg):
+        print('bot ',msg.data, ' needs new status')
         if(self.bot_status[msg.data]==6): #status was going to LS assigned it reached means now LS_assigned to LS_psuedo needs to be given
-            LS_=self.LS_assigned[msg.data]
+            LS_=int(self.LS_assigned[msg.data])
             self.one_step_publish_(self.LS_queue_locations[LS_][len(self.queue_LS_pseudo_actual[LS_])+2],100,msg.data)
             self.queue_LS_pseudo_actual[LS_].append(msg.data)
             k=np.where(np.array(self.queue_LS_assigned[LS_])==msg.data)[0][0]
@@ -257,7 +260,10 @@ class start_goal_publisher:
 
         elif(self.bot_status[msg.data]==0 or self.bot_status[msg.data]==1): #status was 0 it means it has reached in the LS_queue
             self.bot_status[msg.data]=1
-            LS_=self.LS_assigned[msg.data]
+            LS_=int(self.LS_assigned[msg.data])
+            print(LS_)
+            print(self.queue_LS_assigned[LS_])
+            print(np.where(np.array(self.queue_LS_assigned[LS_])==msg.data))    
             k=np.where(self.queue_LS_actual[LS_]==msg.data)[0][0]
             if(k==2):
                 if(self.queue_LS_actual[LS_][0]==-1 and self.queue_LS_actual[LS_][1]==-1):
@@ -276,7 +282,7 @@ class start_goal_publisher:
                     self.one_step_publish_([-100,-100],100,msg.data)
 
         elif(self.bot_status[msg.data]==2): #it was halting at LS for parcel and now it needs to go to destination
-            LS_=self.LS_assigned[msg.data]
+            LS_=int(self.LS_assigned[msg.data])
             self.LS_assigned[msg.data]=-1
             dest_id=self.dest_assigner.assign(LS_)
             dest_block=self.preffered_dest_block(dest_id) #if -1 if retuned | code for it -------------------------------------------------------------
@@ -285,7 +291,7 @@ class start_goal_publisher:
             flip_direction=0
             if(dest_block==0 or dest_block==2):
                 flip_direction=pi/2
-            self.assigned_dest_location[msg.data]=self.grid_locations[dest_id][dest_block].tolist().append(flip_direction)
+            self.assigned_dest_location[msg.data]=self.grid_locations[dest_id][dest_block].append(flip_direction)
             self.CBS_plan()
 
         elif(self.bot_status[msg.data]==3): # it was going from LS-dest, It would have reached there. Need to align for parcel drop
@@ -302,9 +308,9 @@ class start_goal_publisher:
         elif(self.bot_status[msg.data]==5): #parcel has been dropped need to go back to one of the LS
             k=np.where(self.delivery_block_occupancy==msg.data)
             self.delivery_block_occupancy[k[0][0]][k[1][0]]=-1
-            LS_=self.preffered_LS(msg.data)
+            LS_=int(self.preffered_LS(msg.data))
             self.bot_status[msg.data]=6
-            self.assigned_dest_location[msg.data]=self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1].tolist().append(100)
+            self.assigned_dest_location[msg.data]=self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1].append(100)
             self.assigned_dest_location[msg.data][1]=self.assigned_dest_location[msg.data][1]+6
             self.queue_LS_assigned[LS_].append(msg.data)
             self.LS_assigned[msg.data]=LS_
