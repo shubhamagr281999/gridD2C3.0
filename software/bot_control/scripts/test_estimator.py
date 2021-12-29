@@ -17,9 +17,11 @@ class pose_publisher:
         self.pub_poses=rospy.Publisher('/poses',PoseArray,queue_size=1)
         self.poses=PoseArray()
         self.initialize_pose_msg()
-
+        while not rospy.is_shutdown():
+            self.pose_pub()
+            self.control_rate.sleep()
         # subscriber
-        self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
+        # self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
         # self.vid = cv2.VideoCapture(0)
 
 
@@ -77,47 +79,12 @@ class pose_publisher:
             return atan(y/(x+0.00001))
 
     def callback_opencv(self,msg):
-        # for i in range(self.n_agents):
-        #     self.current_pose[i][0]=msg.poses[i].position.x*0.1+self.current_pose[i][0]
-        #     self.current_pose[i][1]=msg.poses[i].position.y*0.1+self.current_pose[i][1]
-        #     self.current_pose[i][2]=msg.poses[i].position.z*0.1+self.current_pose[i][2]
+        for i in range(self.n_agents):
+            self.current_pose[i][0]=msg.poses[i].position.x*0.1+self.current_pose[i][0]
+            self.current_pose[i][1]=msg.poses[i].position.y*0.1+self.current_pose[i][1]
+            self.current_pose[i][2]=msg.poses[i].position.z*0.1+self.current_pose[i][2]
 
-        img = self.bridge.imgmsg_to_cv2(msg, "mono8")
-        img1 = self.bridge.imgmsg_to_cv2(msg, "mono8")
-        arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_7X7_50)
-        arucoParams = cv2.aruco.DetectorParameters_create()
-        #now starting to localise bot wrt to the ids
-
-        # resize tranformed image to 4 time orginal size
-        resize_=4
-        img=cv2.resize(img,(resize_*img.shape[0],resize_*img.shape[1]))
-        (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
-        for i in range(self.n_agents):            
-            a=np.where(ids==(i+1))
-            if a[0].size==1:
-                print(i)
-                (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
-                topRight = (int(topRight[0]), int(topRight[1]))
-                bottomRight = (int(bottomRight[0]), int(bottomRight[1]))
-                bottomLeft = (int(bottomLeft[0]), int(bottomLeft[1]))
-                topLeft = (int(topLeft[0]), int(topLeft[1]))
-                img1=cv2.circle(img1,(bottomRight),10,(250-i*int(200/self.n_agents),10+i*int(200/self.n_agents),30+i*int(200/self.n_agents)),-1)
-                cX = int((topLeft[0] + bottomRight[0]) / 2.0)
-                cY = int((topLeft[1] + bottomRight[1]) / 2.0)
-                print(bottomRight,bottomLeft,topRight,topLeft)
-                print(cX,cY)
-                img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)            
-                self.change_pose(i,cX/resize_,cY/resize_,self.angle((bottomRight[1]-bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
-                # img1=cv2.circle(img1,(int(self.current_pose[i][0]),int(self.current_pose[i][1])),10,(250-i*int(200/self.n_agents),10+i*int(200/self.n_agents),30+i*int(200/self.n_agents)),-1)
-        
-        # # cv2.imshow('original_image', img)
-        # # cv2.waitKey(1)
-    
-
-        cv2.imshow('processed_image',img1)
-        cv2.waitKey(1)
-        # # # cv2.imwrite('arena.png',img1)
-
+    def pose_pub(self):
         for i in range(self.n_agents):
             self.poses.poses[i].position.x=self.current_pose[i][0]
             self.poses.poses[i].position.y=self.current_pose[i][1]

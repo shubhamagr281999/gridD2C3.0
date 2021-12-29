@@ -24,25 +24,25 @@ class goal_publisher:
         self.sub_flag_pid = rospy.Subscriber("/flag_pid",UInt8,self.flag_pid_callback,queue_size=10)
         self.one_step_goal = rospy.Subscriber("/one_step_goal",pose_bot,self.one_step_callback,queue_size=10)
 
-
-
     def empty_list(self,i):
         k=[]
         for j in range(i):
             k.append([])
         return k
 
+    def reverse_transform(self,pose):
+        return [84-6*pose[1]-3,pose[0]*6+3]
     def plan_callback(self,msg):
+        print('heard from CBS')
         for i in msg.agent:
             xi=[]
             yi=[]
             di=[]
             for j in i.statei:
-                xi.append(j.x)
-                yi.append(j.y)
-                di.append(j.z)
+                xi.append(int(j.x))
+                yi.append(int(j.y))
+                di.append(int(j.z))
             self.turning_point(xi,yi,di,i.bot_num)
-
         for i in msg.agent :
             self.yaw[i.bot_num]=100
             self.goal(i.bot_num)
@@ -50,20 +50,16 @@ class goal_publisher:
     def turning_point(self,x,y,d,bot_num):
         turnpoints=[]
         for i in range(1,len(x)-1):
+            #print("hi")
             #movement in y direction
-            if x[i] == x[i+1] and y[i] != y[i+1]:
-                if x[i] != x[i-1] and y[i] == y[i-1]:
-                    turnpoints.append([x[i],y[i]]) 
-            #movement in x direction
-            elif x[i] != x[i+1] and y[i] == y[i+1]:
-                if x[i] == x[i-1] and y[i] != y[i-1]:
-                    turnpoints.append([x[i],y[i]]) 
-            #Halt
-            elif d[i]==di[i+1]:
+            if (d[i]!=d[i+1]):
+                turnpoints.append(self.reverse_transform([x[i],y[i]]))
+            elif d[i]==d[i+1] and x[i]==x[i+1] and y[i]==y[i+1]:
                 turnpoints.append([-100,-100])
-                
+        turnpoints.append(self.reverse_transform([x[-1],y[-1]]))
         self.turning_points[bot_num]=turnpoints
-        # print(self.turning_points)
+        print(self.turning_points)
+        # print(turnpoints)
         # print('-----------------------------------------------------------')
 
 
@@ -94,6 +90,7 @@ class goal_publisher:
             self.turning_points[bot_num].pop(0)
             self.need_new_plan[bot_num]=0
             self.goal_pub(bot_num,self.yaw[bot_num])
+            print('new goal sent for bot ',bot_num)
             
         else:
             pub_msgs=UInt8()

@@ -55,8 +55,8 @@ class start_goal_publisher:
         self.delivery_block_occupancy=np.zeros([9,4]) -1
         self.x0 = 0 #it is the orgin that is top let corner of image
         self.y0 = 0 #it is the orgin that is top let corner of image
-        self.grid_locations = self.grid_location_assigner()  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
-        self.LS_queue_locations = self.LS_location_assinger() #3D array [LS_num][one of 6 pose][0 for x | 1 for y]
+        self.grid_locations = np.array(self.grid_location_assigner())  #3D array [dest_id][one of 4 block][0 for x | 1 for y]
+        self.LS_queue_locations = np.array(self.LS_location_assinger()) #3D array [LS_num][one of 6 pose][0 for x | 1 for y]
 
         # bot staus variables
         self.current_pose=np.zeros([self.n_agents,3])
@@ -197,18 +197,18 @@ class start_goal_publisher:
         k.append(a)
         return k    
    
-    def transform(pose):
+    def transform(self,pose):
         x = pose[0]
         y = pose[1]
-        # print("x:", x , "y : ", y)
+        print("x:", x , "y : ", y)
         x_t = y//6
         y_t = 13 - (x//6)
-        # print("x_t:", x_t , "y_t : ", y_t)
+        print("x_t:", x_t , "y_t : ", y_t)
         return [x_t, y_t, 1]
 
     def preffered_LS(self, bot_num):
-        Loss_function_LS1 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[0][4][0])^2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[0][4][1])^2) 
-        Loss_function_LS2 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[1][4][0])^2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[1][4][1])^2)
+        Loss_function_LS1 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[0][4][0])**2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[0][4][1])**2) 
+        Loss_function_LS2 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[1][4][0])**2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[1][4][1])**2)
         if (Loss_function_LS1 > Loss_function_LS2):
             self.LS_assigned[bot_num]= 1
             self.queue_LS_assigned[1].append(bot_num) #change logic here cant append rather have to check for kast empty element
@@ -227,7 +227,9 @@ class start_goal_publisher:
             return -1
 
     def distance(self,bot_num):
-        return sqrt((self.current_pose[bot_num][0]-self.assigned_dest_location[bot_num][0])**2+(self.current_pose[bot_num][1]-self.assigned_dest_location[bot_num][1])**2)
+        x=self.current_pose[bot_num][0]-self.assigned_dest_location[bot_num][0]
+        y=self.current_pose[bot_num][1]-self.assigned_dest_location[bot_num][1]
+        return sqrt( x**2 + y**2 )
 
     def CBS_plan(self):
         msg=StartGoal()
@@ -237,11 +239,12 @@ class start_goal_publisher:
         for i in k:
             if(self.distance(i)>9):                
                 msg.bot_num.append(i)
-                start_pose=self.tranform(self.current_pose[i])
+                # print('here')
+                start_pose=self.transform(self.current_pose[i])
                 msg.start_x.append(start_pose[0])
                 msg.start_y.append(start_pose[1])
                 msg.start_d.append(start_pose[2])
-                goal_pose=self.tranform(self.assigned_dest_location[i])
+                goal_pose=self.transform(self.assigned_dest_location[i])
                 msg.goal_x.append(goal_pose[0])
                 msg.goal_y.append(goal_pose[1])
                 msg.goal_d.append(goal_pose[2])
@@ -260,10 +263,7 @@ class start_goal_publisher:
 
         elif(self.bot_status[msg.data]==0 or self.bot_status[msg.data]==1): #status was 0 it means it has reached in the LS_queue
             self.bot_status[msg.data]=1
-            LS_=int(self.LS_assigned[msg.data])
-            print(LS_)
-            print(self.queue_LS_assigned[LS_])
-            print(np.where(np.array(self.queue_LS_assigned[LS_])==msg.data))    
+            LS_=int(self.LS_assigned[msg.data])    
             k=np.where(self.queue_LS_actual[LS_]==msg.data)[0][0]
             if(k==2):
                 if(self.queue_LS_actual[LS_][0]==-1 and self.queue_LS_actual[LS_][1]==-1):
@@ -291,7 +291,7 @@ class start_goal_publisher:
             flip_direction=0
             if(dest_block==0 or dest_block==2):
                 flip_direction=pi/2
-            self.assigned_dest_location[msg.data]=self.grid_locations[dest_id][dest_block].append(flip_direction)
+            self.assigned_dest_location[msg.data]=[self.grid_locations[dest_id][dest_block][0],self.grid_locations[dest_id][dest_block][1],flip_direction]
             self.CBS_plan()
 
         elif(self.bot_status[msg.data]==3): # it was going from LS-dest, It would have reached there. Need to align for parcel drop
@@ -310,15 +310,13 @@ class start_goal_publisher:
             self.delivery_block_occupancy[k[0][0]][k[1][0]]=-1
             LS_=int(self.preffered_LS(msg.data))
             self.bot_status[msg.data]=6
-            self.assigned_dest_location[msg.data]=self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1].append(100)
+            self.assigned_dest_location[msg.data]=[self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1][0],self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1][1],100]
             self.assigned_dest_location[msg.data][1]=self.assigned_dest_location[msg.data][1]+6
             self.queue_LS_assigned[LS_].append(msg.data)
             self.LS_assigned[msg.data]=LS_
             self.CBS_plan()
 
-
 if __name__ == '__main__':
-    print("here ")
     rospy.init_node('Start_goal_publisher')
     rospy.loginfo("Start goal_publisher created | decides gaol based on the logic defined")
     start_goal_pub_obj=start_goal_publisher()

@@ -382,13 +382,9 @@ class wrapper:
             return
         list1_init=PathArray()
         msg=CompletePlan()
-        # print(solution)
-        temp_agent=[]
+        print(solution)
 
-        for i in range(n_agents):
-            temp_agent.append(PathArray())
-        msg.agent=temp_agent
-        for i in range(n_agents):
+        for i in self.bot_num:
             n_states=len(solution[i])
             path_agenti=[]
             for j in range(n_states):
@@ -399,10 +395,9 @@ class wrapper:
                 path_agenti.append(k)
             temp_pathi=PathArray()
             temp_pathi.statei=path_agenti
-            temp_pathi.bot_num=self.bot_num[i]
-            msg.agent[i]=temp_pathi
+            temp_pathi.bot_num=i
+            msg.agent.append(temp_pathi)
             
-        # print(msg)
         self.cbs_plan_pub.publish(msg)
         # Write to output file
         with open(self.args.output, 'r') as output_yaml:
