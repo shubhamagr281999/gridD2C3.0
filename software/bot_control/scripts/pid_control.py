@@ -7,10 +7,11 @@ from bot_control.msg import pose_bot
 from std_msgs.msg import Bool, UInt8
 from math import sqrt, pi, atan, ceil,sin,cos
 import numpy as np
+from time import sleep
 
 class PID:
     def __init__(self):
-        self.n_agents=1
+        self.n_agents=4
         self.control_rate=rospy.Rate(10)
 
         # defining tunable params
@@ -46,10 +47,10 @@ class PID:
         self.intergral_windup_lin_y=15.0
 
         self.lin_x_threshold = 0.5
-        self.lin_x_smalldiff = 10.0
+        self.lin_x_smalldiff = 2
 
         self.lin_y_threshold = 0.5
-        self.lin_y_smalldiff = 10.0
+        self.lin_y_smalldiff = 2
 
         self.angle_threshold = 0.1
         self.angle_smalldiff = 0.3
@@ -251,17 +252,17 @@ class PID:
 
                     #PID angular
                     if (abs(diff_yaw) > self.angle_smalldiff):
-                        self.w_output= self.kp_angle*(diff_yaw) + self.kd_angle*(diff_yaw-self.lastError_angle[i]) + self.ki_angle*(self.sumError_angle[i])
+                        self.w_output[i]= self.kp_angle*(diff_yaw) + self.kd_angle*(diff_yaw-self.lastError_angle[i]) + self.ki_angle*(self.sumError_angle[i])
                         self.lastError_angle[i] = diff_yaw
                         if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
                             self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
                     elif (abs(diff_yaw) <= self.angle_smalldiff and abs(diff_yaw)>self.angle_threshold):
-                        self.w_output= self.kp_angle_soft*(diff_yaw) + self.kd_angle_soft*(diff_yaw-self.lastError_angle[i]) + self.ki_angle_soft*(self.sumError_angle[i])
+                        self.w_output[i]= self.kp_soft_angle*(diff_yaw) + self.kd_soft_angle*(diff_yaw-self.lastError_angle[i]) + self.ki_soft_angle*(self.sumError_angle[i])
                         self.lastError_angle[i] = diff_yaw
                         if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
                             self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
                     else:
-                        self.w_output=0
+                        self.w_output[i]=0
 
                     # might have to tweak in case of overshoot or very high time
                     if(abs(diff_yaw) <= self.angle_threshold and abs(distance_y) < self.lin_y_threshold and abs(distance_x) < self.lin_x_threshold):
@@ -282,6 +283,7 @@ class PID:
                 if(self.need_new_plan[i] == 1):
                     pub_msgs=UInt8()
                     pub_msgs.data=i
+                    print('bot: ',i, ' needs new waypoint')
                     self.flag_pid_pub.publish(pub_msgs)
                     self.need_new_plan[i]=2
 
@@ -295,6 +297,7 @@ if __name__ == '__main__':
     rospy.init_node('controller_node')
     rospy.loginfo("controller_node for bot1 created")
     pid_controller=PID()
+    sleep(7)
     pid_controller.pid()
     # spin() simply keeps python from exiting until this node is stopped
     # rospy.spin()
