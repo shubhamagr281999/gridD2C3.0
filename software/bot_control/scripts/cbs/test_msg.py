@@ -2,13 +2,19 @@
 
 import rospy
 import time
-from bot_control.msg import StartGoal
+from bot_control.msg import StartGoal, pose_bot
 
 # from drdo_exploration.msg import teleopData
 class pose_publisher:
     def __init__(self):
         self.pub_test=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=1)
+        # self.pub_check=rospy.Publisher('/check',pose_bot,queue_size=1)
         self.data=StartGoal()
+        # self.msg=pose_bot()
+        # self.msg.x=1.0
+        # self.msg.y=2.0
+        # self.msg.yaw=2.0
+        # self.msg.bot_num=1
         self.data.start_x=[0,0,13,8]
         self.data.start_y=[6,7,5,0]
         self.data.start_d=[0,0,0,0]
@@ -20,6 +26,7 @@ class pose_publisher:
 
         # print(self.data)
         while not rospy.is_shutdown(): 
+            # self.pub_check.publish(self.msg)
             self.pub_test.publish(self.data)
             print("publihsed to cbs")
             time.sleep(2)

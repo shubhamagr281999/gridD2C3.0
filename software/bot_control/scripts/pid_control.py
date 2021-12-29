@@ -2,7 +2,8 @@
 
 import rospy
 from tf.transformations import euler_from_quaternion
-from geometry_msgs.msg import Pose, PoseArray, Point,PointStamped
+from geometry_msgs.msg import Pose, PoseArray, Point
+from bot_control.msg import pose_bot
 from std_msgs.msg import Bool, UInt8
 from math import sqrt, pi, atan, ceil,sin,cos
 import numpy as np
@@ -88,7 +89,7 @@ class PID:
 
         # subscribers
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
-        self.goal_pose_sub=rospy.Subscriber('/goal_point', PointStamped,self.goal_pose_callback,queue_size=10)
+        self.goal_pose_sub=rospy.Subscriber('/goal_point', pose_bot,self.goal_pose_callback,queue_size=10)
 
     def initialize_current_pose(self):
         for i in range(self.n_agents):
@@ -147,11 +148,11 @@ class PID:
             self.current_pose[i][2]=msg.poses[i].position.z
 
     def goal_pose_callback(self,msg):
-        self.goal_pose[msg.header.seq][0]=msg.point.x
-        self.goal_pose[msg.header.seq][1]=msg.point.y
-        if (msg.point.z != 100):
-            self.goal_pose[msg.header.seq][2]=msg.point.z
-        self.need_new_plan[msg.header.seq]=0
+        self.goal_pose[msg.bot_num][0]=msg.x
+        self.goal_pose[msg.bot_num][1]=msg.y
+        if (msg.yaw != 100):
+            self.goal_pose[msg.bot_num][2]=msg.yaw
+        self.need_new_plan[msg.bot_num]=0
         # print(self.goal_pose)
 
     def twist_msg(self):

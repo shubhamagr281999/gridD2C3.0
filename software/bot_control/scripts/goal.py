@@ -3,8 +3,7 @@
 import rospy
 from time import sleep
 from std_msgs.msg import UInt8
-from bot_control.msg import CompletePlan
-from geometry_msgs.msg import PointStamped
+from bot_control.msg import CompletePlan, pose_bot
 import numpy as np
 
 class goal_publisher:
@@ -16,13 +15,13 @@ class goal_publisher:
         self.need_new_plan=np.zeros(self.n_agents)
 
         # publishers
-        self.pub_goal=rospy.Publisher('/goal_point',PointStamped,queue_size=10)
+        self.pub_goal=rospy.Publisher('/goal_point',pose_bot,queue_size=10)
         self.pub_new_plan = rospy.Publisher('/new_plan',UInt8,queue_size=10)
 
         # subscribers
         self.plans_callback=rospy.Subscriber("/cbs/plan",CompletePlan,self.plan_callback,queue_size=10)
         self.sub_flag_pid = rospy.Subscriber("/flag_pid",UInt8,self.flag_pid_callback,queue_size=10)
-        self.one_step_goal = rospy.Subscriber("/one_step_goal",PointStamped,self.one_step_callback,queue_size=10)
+        self.one_step_goal = rospy.Subscriber("/one_step_goal",pose_bot,self.one_step_callback,queue_size=10)
 
 
     def empty_list(self,i):
@@ -70,17 +69,17 @@ class goal_publisher:
         self.goal(msg.data)        
 
     def one_step_callback(self,msg):
-        self.turning_points[msg.header.seq]=[[msg.point.x,msg.point.y]]
-        self.goal(msg.header.seq,msg.point.z)
+        self.turning_points[msg.header.seq]=[[msg.x,msg.y]]
+        self.goal(msg.bot_num,msg.yaw)
 
 
     def goal_pub(self,bot_num,yaw):
         msg=Point()
 
-        msg.point.x=self.goal_pose[bot_num][0]
-        msg.point.y=self.goal_pose[bot_num][1]
-        msg.point.z=yaw #100 is large impratical yaw just to indicate final yaw is not of significance
-        msg.header.seq=bot_num
+        msg.x=self.goal_pose[bot_num][0]
+        msg.y=self.goal_pose[bot_num][1]
+        msg.z=yaw #100 is large impratical yaw just to indicate final yaw is not of significance
+        msg.bot_num=bot_num
         self.pub_goal.publish(msg)
 
     def goal(self,bot_num,yaw):

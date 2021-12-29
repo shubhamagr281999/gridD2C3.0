@@ -14,7 +14,7 @@ class destination_assign:
         self.dicti = {0: 'Mumbai', 1: 'Delhi', 2: 'Kolkata', 3: 'Chennai', 4: 'Bengaluru', 5: 'Hyderabad', 6: 'Pune', 7: 'Ahmedabad', 8: 'Jaipur'}
         self.key_list = list(self.dicti.keys())
         self.val_list = list(self.dicti.values())
-        self.excel = pd.read_excel(r'~/catkin_ws/src/gridD2C3.0/Sample Data.xls')
+        self.excel = pd.read_excel(r'~/catkin_ws/src/gridD2C3.0/Sample Data.xls') #sheet of destinations for each parcel
         self.destination= self.excel['Destination'].tolist()
 
         self.LS= self.excel['Induct Station'].tolist()
@@ -75,17 +75,17 @@ class start_goal_publisher:
 
         # publishers
         self.dest_pub=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=10)
-        self.one_step_goal_pub=rospy.Publisher('/one_step_goal',PointStamped,queue_size=10)
-        self.one_step_msg=PointStamped()
+        self.one_step_goal_pub=rospy.Publisher('/one_step_goal',pose_bot,queue_size=10)
+        self.one_step_msg=pose_bot()
         self.flipMotor_pub=rospy.Publisher('/flipmotor',UInt8,queue_size=10)  
         
         # print(self.grid_locations)
 
     def one_step_publish_(self,point,yaw,bot_num):
-        self.one_step_msg.header.seq=bot_num
-        self.one_step_msg.point.x=point[0]
-        self.one_step_msg.point.y=point[1]
-        self.one_step_msg.point.z=yaw
+        self.one_step_msg.bot_num=bot_num
+        self.one_step_msg.x=point[0]
+        self.one_step_msg.y=point[1]
+        self.one_step_msg.yaw=yaw
         self.one_step_goal_pub.publish(self.one_step_msg)
 
     def current_state_callback(self,msg):
