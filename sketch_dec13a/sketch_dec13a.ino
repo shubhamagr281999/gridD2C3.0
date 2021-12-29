@@ -1,14 +1,14 @@
-#include <ESP8266WiFi.h>
-#include <ESP8266WebServer.h>
-#include <WiFiClient.h>
+//start server assignment from 240-249 it is being done because the last digit of 24x will represent bot number
 
-IPAddress local_IP(192, 168, 0, 250); // just change the last one make it static
+#include <ESP8266WebServer.h>
+#include <Servo.h>
+
+IPAddress local_IP(192, 168, 0, 240);
 IPAddress gateway(192, 168, 0, 1); 
-// gateway is router IP adress
 IPAddress subnet(255, 255, 255, 0);
 
-const char* ssid = "Tinkerers' Lab";
-const char* password = "tinker@tl";
+const char* ssid = "TP-Link_37FE";
+const char* password = "12345678";
 
 double OL=0;
 double OR=0;
@@ -46,12 +46,14 @@ String getValue(String data, char separator, int index)
 }
 
 void control(){
+  //String data; //added by nitish, check aniket
+  //Serial.println(data);
   String postBody = server.arg("plain");
-  Serial.println(postBody);
-  OL = getValue(data,',',0).toDouble();
-  OR = getValue(data,',',1).toDouble();
-  OF = getValue(data,',',2).toDouble();
-  S = getValue(data,',',3).toInt();
+  //Serial.println(postBody);
+  OF = getValue(postBody,',',0).toDouble();
+  OL = getValue(postBody,',',1).toDouble();
+  OR = getValue(postBody,',',2).toDouble();
+  S = getValue(postBody,',',3).toInt();
   Serial.println(OL);
   Serial.println(OR);
   Serial.println(OF);
@@ -82,7 +84,8 @@ void control(){
       analogWrite(r2,-1*OF);
     }
   }
-  else{
+  
+  if(S==1){
     myservo.write(75);
     delay(1000);
     myservo.write(0);
@@ -94,7 +97,6 @@ void control(){
 void setup() {
   Serial.begin(115200);
 
-  
   pinMode(l1, OUTPUT);
   pinMode(l2, OUTPUT);
   pinMode(r1, OUTPUT);
