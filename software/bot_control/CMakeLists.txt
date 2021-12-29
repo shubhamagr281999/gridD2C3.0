@@ -59,6 +59,7 @@ add_message_files(
   dest_id.msg
   Bot_status.msg
   Bot_task.msg
+  pose_bot.msg
 )
 
 ## Generate services in the 'srv' folder

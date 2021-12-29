@@ -9,46 +9,46 @@ import numpy as np
 
 class PID:
     def __init__(self):
-        self.n_agents=4
+        self.n_agents=1
         self.control_rate=rospy.Rate(10)
 
-        # defining tunable params        
-        self.kp_lin_x= 1
-        self.kd_lin_x= 0
-        self.ki_lin_x= 0
+        # defining tunable params
+        self.kp_lin_x= 1.0
+        self.kd_lin_x= 1.0/10.0
+        self.ki_lin_x= 1.0/2.0
 
-        self.kp_soft_lin_x= 1
-        self.kd_soft_lin_x= 0
-        self.ki_soft_lin_x= 0
+        self.kp_soft_lin_x= 5.0
+        self.kd_soft_lin_x= 5.0/10.0
+        self.ki_soft_lin_x= 5.0/2.0
 
-        self.kp_lin_y= 1
-        self.kd_lin_y= 0
-        self.ki_lin_y= 0
+        self.kp_lin_y= 1.0
+        self.kd_lin_y= 1.0/10.0
+        self.ki_lin_y= 1.0/2.0
 
-        self.kp_soft_lin_y= 1
-        self.kd_soft_lin_y= 0
-        self.ki_soft_lin_y= 0
+        self.kp_soft_lin_y= 5.0
+        self.kd_soft_lin_y= 5.0/10.0
+        self.ki_soft_lin_y= 5.0/2.0
 
-        self.kp_angle= 1
-        self.kd_angle= 0
-        self.ki_angle= 0
+        self.kp_angle= 2.0
+        self.kd_angle= 2.0/10.0
+        self.ki_angle= 2.0/2.0
 
-        self.kp_soft_angle= 1
-        self.kd_soft_angle= 0
-        self.ki_soft_angle= 0
+        self.kp_soft_angle= 1.0
+        self.kd_soft_angle= 1.0/10.0
+        self.ki_soft_angle= 1.0/2.0
 
-        self.max_vel_lin=30.0/60.0
-        self.max_vel_ang=1.1
+        self.max_vel_lin= 5.0
+        self.max_vel_ang= 1.0
 
-        self.intergral_windup_yaw=20
-        self.intergral_windup_lin_x=15
-        self.intergral_windup_lin_y=15
+        self.intergral_windup_yaw=20.0
+        self.intergral_windup_lin_x=15.0
+        self.intergral_windup_lin_y=15.0
 
-        self.lin_x_threshold = 5
-        self.lin_x_smalldiff = 10
+        self.lin_x_threshold = 0.5
+        self.lin_x_smalldiff = 10.0
 
-        self.lin_y_threshold = 5
-        self.lin_y_smalldiff = 10
+        self.lin_y_threshold = 0.5
+        self.lin_y_smalldiff = 10.0
 
         self.angle_threshold = 0.1
         self.angle_smalldiff = 0.3
@@ -63,7 +63,7 @@ class PID:
         self.sumError_dist_y = np.zeros(self.n_agents)
         self.sumError_angle = np.zeros(self.n_agents)
 
-        #other valribales from here     
+        #other valribales from here
         self.current_pose=np.zeros([self.n_agents,3]) #[bot_num][0 for x | 1 for y | 2 for yaw]
         self.goal_pose=np.zeros([self.n_agents,3])
         self.v_x_output=np.zeros(self.n_agents)   #vx and vy are in global coordinate system
@@ -80,11 +80,11 @@ class PID:
 
         # publishers
         self.control_input_pub = rospy.Publisher('/cmd_vel', PoseArray, queue_size=10)
-        self.cmd_vel_msg=PoseArray() # here we use only poistion of Poses msg. x will have vx, y will be vy and z will be omega in position object 
+        self.cmd_vel_msg=PoseArray() # here we use only poistion of Poses msg. x will have vx, y will be vy and z will be omega in position object
         self.wheel_speed_pub=rospy.Publisher('/wheel_speed',PoseArray, queue_size=10)
         self.wheel_vel_msg=PoseArray() # here we use only poistion of Poses msg. x will have w1, y will be w1 and z will be w3 in position object
-        self.initialize_cmd_vel_msg()        
-        self.flag_pid_pub = rospy.Publisher('/flag_id',UInt8,queue_size=10)
+        self.initialize_cmd_vel_msg()
+        self.flag_pid_pub = rospy.Publisher('/flag_pid',UInt8,queue_size=10)
 
         # subscribers
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
@@ -94,7 +94,7 @@ class PID:
         for i in range(self.n_agents):
             if(i<int(ceil(self.n_agents/2.0))):
                 self.current_pose[i][0]=(4-i)*6+3
-                
+
                 if(i==0):
                     self.current_pose[i][1]=3
                     self.current_pose[i][2]=pi/2
@@ -103,7 +103,7 @@ class PID:
                     self.current_pose[i][2]=0
             else :
                 self.current_pose[i][0]=(9 + i - ceil(self.n_agents/2.0))*6 + 3
-                
+
                 if(i==ceil(self.n_agents/2.0)):
                     self.current_pose[i][1]=3
                     self.current_pose[i][2]=pi/2
@@ -114,7 +114,7 @@ class PID:
         for i in range(self.n_agents):
             if(i<int(ceil(self.n_agents/2.0))):
                 self.goal_pose[i][0]=(4-i)*6+3
-                
+
                 if(i==0):
                     self.goal_pose[i][1]=3
                     self.goal_pose[i][2]=pi/2
@@ -123,7 +123,7 @@ class PID:
                     self.goal_pose[i][2]=0
             else :
                 self.goal_pose[i][0]=(9 + i - ceil(self.n_agents/2.0))*6 + 3
-                
+
                 if(i==ceil(self.n_agents/2.0)):
                     self.goal_pose[i][1]=3
                     self.goal_pose[i][2]=pi/2
@@ -137,7 +137,7 @@ class PID:
         for i in range(self.n_agents):
             temp_poses.append(Pose())
             temp_poses2.append(Pose())
-        self.cmd_vel_msg.poses=temp_poses
+        self.cmd_vel_msg.poses=temp_poses        #why is this cmd_vel_msg."poses"???
         self.wheel_vel_msg.poses=temp_poses2
 
     def current_state_callback(self,msg):
@@ -155,15 +155,15 @@ class PID:
         # print(self.goal_pose)
 
     def twist_msg(self):
-        for i in range(self.n_agents):            
+        for i in range(self.n_agents):
             if abs(self.v_x_output[i])>self.max_vel_lin :
                 self.cmd_vel_msg.poses[i].position.x = self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]
-                self.v_x_output[i]=self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]    
+                self.v_x_output[i]=self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]
             else :
                self.cmd_vel_msg.poses[i].position.x = self.v_x_output[i]
 
             if abs(self.v_y_output[i])>self.max_vel_lin :
-                self.cmd_vel_msg.poses[i].position.y = self.max_vel_lin*abs(self.v_y_output[i])/self.v_y_output[i]    
+                self.cmd_vel_msg.poses[i].position.y = self.max_vel_lin*abs(self.v_y_output[i])/self.v_y_output[i]
                 self.v_y_output[i] = self.max_vel_lin*abs(self.v_y_output[i])/self.v_y_output[i]
             else :
                self.cmd_vel_msg.poses[i].position.y = self.v_y_output[i]
@@ -172,7 +172,7 @@ class PID:
                 self.cmd_vel_msg.poses[i].position.z = self.max_vel_ang*abs(self.w_output[i])/self.w_output[i]
                 self.w_output[i] = self.max_vel_ang*abs(self.w_output[i])/self.w_output[i]
             else :
-                self.cmd_vel_msg.poses[i].position.z = self.w_output[i]  
+                self.cmd_vel_msg.poses[i].position.z = self.w_output[i]
 
         # computing the wheel speeds
         self.inverse_tranform()
@@ -195,10 +195,10 @@ class PID:
         self.lastError_dist_x[i] = 0
         self.lastError_dist_y[i] = 0
         self.lastError_angle[i] = 0
-        
+
         self.sumError_dist_x[i] = 0
         self.sumError_dist_y[i] = 0
-        self.sumError_angle[i] = 0        
+        self.sumError_angle[i] = 0
 
     def correct_diff_yaw(self, diff_yaw):
         if diff_yaw < -1*pi:
@@ -210,25 +210,10 @@ class PID:
     def pid(self):
         while not rospy.is_shutdown():
             for i in range(self.n_agents):
-                if(self.need_new_plan[i] == 0): 
+                if(self.need_new_plan[i] == 0):  #means already there is a plan
                     diff_yaw=self.correct_diff_yaw(self.goal_pose[i][2]-self.current_pose[i][2])
                     distance_x= self.goal_pose[i][0] - self.current_pose[i][0]
                     distance_y= self.goal_pose[i][1] - self.current_pose[i][1]
-                    #PID along x
-                    if (abs(distance_x) > self.lin_x_smalldiff):
-                        self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
-                        self.lastError_dist_x[i]= distance_x
-                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
-                            self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
-
-                    elif (abs(distance_x) <= self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
-                        self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
-                        self.lastError_dist_x[i]= distance_x
-                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
-                            self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
-
-                    else:
-                        self.v_x_output[i]=0
                     #PID along y
                     if (abs(distance_y) > self.lin_y_smalldiff):
                         self.v_y_output[i] = self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
@@ -244,6 +229,24 @@ class PID:
 
                     else:
                         self.v_y_output[i]=0
+
+                    #PID along x
+                    if (abs(distance_x) > self.lin_x_smalldiff):
+                        self.v_y_output[i]=0
+
+                        self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
+                        self.lastError_dist_x[i]= distance_x
+                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                            self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+
+                    elif (abs(distance_x) <= self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
+                        self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
+                        self.lastError_dist_x[i]= distance_x
+                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                            self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+
+                    else:
+                        self.v_x_output[i]=0
 
                     #PID angular
                     if (abs(diff_yaw) > self.angle_smalldiff):
@@ -280,12 +283,12 @@ class PID:
                     pub_msgs.data=i
                     self.flag_pid_pub.publish(pub_msgs)
                     self.need_new_plan[i]=2
-                                
+
             self.twist_msg()
             # print('hey there')
-            self.control_rate.sleep() 
+            self.control_rate.sleep()
 
-    
+
 if __name__ == '__main__':
 
     rospy.init_node('controller_node')
