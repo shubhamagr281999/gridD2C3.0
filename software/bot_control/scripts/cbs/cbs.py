@@ -352,6 +352,7 @@ class wrapper:
         self.goal_x=[]
         self.goal_y=[]
         self.goal_d=[]
+        self.bot_num=[]
         self.parser = argparse.ArgumentParser()
         self.parser.add_argument("param", help="input file containing map and obstacles")
         self.parser.add_argument("output", help="output file with the schedule")
@@ -394,12 +395,13 @@ class wrapper:
                 k=Point()
                 k.x=solution[i][j]['x']
                 k.y=solution[i][j]['y']
-                k.z=solution[i][j]['t']
+                k.z=float(solution[i][j]['d'])
                 path_agenti.append(k)
             temp_pathi=PathArray()
-            temp_pathi=path_agenti
-            msg.agent[i].statei=temp_pathi
-            msg.agent[i].bot_num=self.bot_num[i]
+            temp_pathi.statei=path_agenti
+            temp_pathi.bot_num=self.bot_num[i]
+            msg.agent[i]=temp_pathi
+            
         # print(msg)
         self.cbs_plan_pub.publish(msg)
         # Write to output file

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
-from math import ceil,pi
+from math import ceil,pi,sqrt
 import pandas as pd
 from time import sleep
 from std_msgs.msg import UInt8
@@ -195,6 +195,15 @@ class start_goal_publisher:
         k.append(a)
         return k    
    
+    def transform(pose):
+        x = pose[0]
+        y = pose[1]
+        # print("x:", x , "y : ", y)
+        x_t = y//6
+        y_t = 13 - (x//6)
+        # print("x_t:", x_t , "y_t : ", y_t)
+        return [x_t, y_t, 1]
+
     def preffered_LS(self, bot_num):
         Loss_function_LS1 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[0][4][0])^2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[0][4][1])^2) 
         Loss_function_LS2 =self.lossfunction_para1 * sqrt((self.current_pose[bot_num][0] - self.LS_queue_locations[1][4][0])^2 + (self.current_pose[bot_num][1] - self.LS_queue_locations[1][4][1])^2)
@@ -215,21 +224,25 @@ class start_goal_publisher:
             print('All delivery zones assigned need to wait')
             return -1
 
+    def distance(self,bot_num):
+        return sqrt((self.current_pose[bot_num][0]-self.assigned_dest_location[bot_num][0])**2+(self.current_pose[bot_num][1]-self.assigned_dest_location[bot_num][1])**2)
+
     def CBS_plan(self):
         msg=StartGoal()
         k=np.where(self.bot_status==3)[0]
         n=np.where(self.bot_status==6)[0]
         k=np.concatenate([k,n]).tolist()
         for i in k:
-            msg.bot_num.append(i)
-            start_pose=self.tranform(self.current_pose[i])
-            msg.start_x.append(start_pose[0])
-            msg.start_y.append(start_pose[1])
-            msg.start_d.append(start_pose[2])
-            goal_pose=self.tranform(self.assigned_dest_location[i])
-            msg.goal_x.append(goal_pose[0])
-            msg.goal_y.append(goal_pose[1])
-            msg.goal_d.append(goal_pose[2])
+            if(self.distance(i)>9):                
+                msg.bot_num.append(i)
+                start_pose=self.tranform(self.current_pose[i])
+                msg.start_x.append(start_pose[0])
+                msg.start_y.append(start_pose[1])
+                msg.start_d.append(start_pose[2])
+                goal_pose=self.tranform(self.assigned_dest_location[i])
+                msg.goal_x.append(goal_pose[0])
+                msg.goal_y.append(goal_pose[1])
+                msg.goal_d.append(goal_pose[2])
         self.dest_pub.publish(msg)
 
     def new_plan_callback(self,msg):
@@ -287,7 +300,8 @@ class start_goal_publisher:
             self.flipMotor_pub.publish(msg_flip)
             
         elif(self.bot_status[msg.data]==5): #parcel has been dropped need to go back to one of the LS
-            # self.delivery_block_occupancy[][] ---------------------------------------------------------------
+            k=np.where(self.delivery_block_occupancy==msg.data)
+            self.delivery_block_occupancy[k[0][0]][k[1][0]]=-1
             LS_=self.preffered_LS(msg.data)
             self.bot_status[msg.data]=6
             self.assigned_dest_location[msg.data]=self.LS_queue_locations[LS_][len(self.queue_LS_assigned[LS_])-1].tolist().append(100)

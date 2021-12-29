@@ -35,15 +35,17 @@ class goal_publisher:
         for i in msg.agent:
             xi=[]
             yi=[]
+            di=[]
             for j in i.statei:
                 xi.append(j.x)
                 yi.append(j.y)
-            self.turning_point(xi,yi,i.bot_num)
-        for i in range(self.n_agents):
-            if(self.need_new_plan[i]==1):
-                self.goal(i)
+                di.append(j.z)
+            self.turning_point(xi,yi,di,i.bot_num)
 
-    def turning_point(self,x,y,bot_num):
+        for i in msg.agent :
+            self.goal(i.bot_num,100)
+
+    def turning_point(self,x,y,d,bot_num):
         turnpoints=[]
         for i in range(1,len(x)-1):
             #movement in y direction
@@ -55,7 +57,7 @@ class goal_publisher:
                 if x[i] == x[i-1] and y[i] != y[i-1]:
                     turnpoints.append([x[i],y[i]]) 
             #Halt
-            else:
+            elif d[i]==di[i+1]:
                 turnpoints.append([-100,-100])
                 
         self.turning_points[bot_num]=turnpoints
@@ -68,7 +70,8 @@ class goal_publisher:
         self.goal(msg.data)        
 
     def one_step_callback(self,msg):
-        print('will be done soon')
+        self.turning_points[msg.header.seq]=[[msg.point.x,msg.point.y]]
+        self.goal(msg.header.seq,msg.point.z)
 
 
     def goal_pub(self,bot_num,yaw):
@@ -80,13 +83,13 @@ class goal_publisher:
         msg.header.seq=bot_num
         self.pub_goal.publish(msg)
 
-    def goal(self,bot_num):
+    def goal(self,bot_num,yaw):
         if(len(self.turning_points[bot_num])>0):
             self.goal_pose[bot_num][0]=self.turning_points[i][0][0]
             self.goal_pose[bot_num][1]=self.turning_points[i][0][1]
             self.turning_points[bot_num].pop(0)
             self.need_new_plan[bot_num]=0
-            self.goal_pub(bot_num,100)
+            self.goal_pub(bot_num,yaw)
             
         else:
             pub_msgs=UInt8()
