@@ -244,8 +244,8 @@ class start_goal_publisher:
     def CBS_plan(self):
         msg=StartGoal()
         k=np.where(self.bot_status==3)[0]
-        n=np.where(self.bot_status==6)[0]
-        k=np.concatenate([k,n]).tolist()
+        p=np.where(self.bot_status==6)[0]
+        k=np.concatenate([k,p]).tolist()
         for i in k:
             if(self.distance(i)>9):                
                 msg.bot_num.append(i)
@@ -258,6 +258,22 @@ class start_goal_publisher:
                 msg.goal_x.append(goal_pose[0])
                 msg.goal_y.append(goal_pose[1])
                 msg.goal_d.append(goal_pose[2])
+
+        m=np.where(self.bot_status==4)[0]
+        n=np.where(self.bot_status==5)[0]
+        k=np.concatenate([m,n]).tolist()
+        for i in k:                
+            msg.bot_num.append(i)
+            # print('here')
+            start_pose=self.transform(self.current_pose[i])
+            msg.start_x.append(start_pose[0])
+            msg.start_y.append(start_pose[1])
+            msg.start_d.append(start_pose[2])
+            goal_pose=self.transform(self.current_pose[i])
+            msg.goal_x.append(goal_pose[0])
+            msg.goal_y.append(goal_pose[1])
+            msg.goal_d.append(goal_pose[2])
+
         self.dest_pub.publish(msg)
 
     def new_plan_callback(self,msg):
