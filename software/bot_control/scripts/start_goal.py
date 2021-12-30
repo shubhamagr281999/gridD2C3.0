@@ -113,15 +113,6 @@ class start_goal_publisher:
                         self.queue_LS_actual[0][((self.current_pose[i][0]-54)//6)+1]=i
                         bot_found[0][((self.current_pose[i][0]-54)//6)+1]=1
 
-                    # for j in range(5):
-                    #     if(self.current_pose[i][0]<(6*j+4.5) and self.current_pose[i][0]>(6*j+1.5)):
-                    #         self.queue_LS_actual[0][5-j]=i
-                    #         bot_found[0][5-j]=1
-                    #         break
-                    #     if(self.current_pose[i][0]<(6*(j+9)+4.5) and self.current_pose[i][0]>(6*(j+9)+1.5)):
-                    #         self.queue_LS_actual[1][j+1]=i
-                    #         bot_found[1][j+1]=1
-                    #         break
         not_bot=np.where(bot_found==0)
         for i in range(np.shape(not_bot)[1]):
             self.queue_LS_actual[not_bot[0][i]][not_bot[1][i]]=-1
