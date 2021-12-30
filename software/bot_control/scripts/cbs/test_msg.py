@@ -18,8 +18,8 @@ class pose_publisher:
         self.data.start_x=[0,0]
         self.data.start_y=[9,4]
         self.data.start_d=[0,0]
-        self.data.goal_x=[4,9,5,0]
-        self.data.goal_y=[4,3,2,7]
+        self.data.goal_x=[2,9]
+        self.data.goal_y=[9,3]
         self.data.goal_d=[0,0]
         self.data.bot_num=[0,1]
 

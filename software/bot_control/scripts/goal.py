@@ -56,7 +56,8 @@ class goal_publisher:
                 turnpoints.append(self.reverse_transform([x[i],y[i]]))
             elif d[i]==d[i+1] and x[i]==x[i+1] and y[i]==y[i+1]:
                 turnpoints.append([-100,-100])
-        turnpoints.append(self.reverse_transform([x[-1],y[-1]]))
+        if(len(x)>1):
+            turnpoints.append(self.reverse_transform([x[-1],y[-1]]))
         self.turning_points[bot_num]=turnpoints
         print(self.turning_points)
         # print(turnpoints)
