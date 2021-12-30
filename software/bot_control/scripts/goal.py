@@ -9,7 +9,7 @@ import numpy as np
 class goal_publisher:
     def __init__(self):
         # self.rate=rospy.Rate(0.5)
-        self.n_agents=4
+        self.n_agents=8
         self.goal_pose=np.zeros([self.n_agents,3])
         self.turning_points=self.empty_list(self.n_agents)
         self.need_new_plan=np.zeros(self.n_agents)
@@ -43,22 +43,33 @@ class goal_publisher:
                 yi.append(int(j.y))
                 di.append(int(j.z))
             self.turning_point(xi,yi,di,i.bot_num)
-        for i in msg.agent :
-            self.yaw[i.bot_num]=100
-            self.goal(i.bot_num)
 
     def turning_point(self,x,y,d,bot_num):
         turnpoints=[]
         for i in range(1,len(x)-1):
-            #print("hi")
-            #movement in y direction
-            if (d[i]!=d[i+1]):
-                turnpoints.append(self.reverse_transform([x[i],y[i]]))
-            elif d[i]==d[i+1] and x[i]==x[i+1] and y[i]==y[i+1]:
+
+        #     #print("hi")
+        #     #movement in y direction
+        #     if (d[i]!=d[i+1]):
+        #         turnpoints.append(self.reverse_transform([x[i],y[i]]))
+        #     elif d[i]==d[i+1] and x[i]==x[i+1] and y[i]==y[i+1]:
+        #         turnpoints.append([-100,-100])
+
+         #movement in y direction
+            if x[i] == x[i+1] and y[i] != y[i+1]:
+                if x[i] != x[i-1] and y[i] == y[i-1]:
+                    turnpoints.append(self.reverse_transform([x[i],y[i]])) 
+            #movement in x direction
+            elif x[i] != x[i+1] and y[i] == y[i+1]:
+                if x[i] == x[i-1] and y[i] != y[i-1]:
+                    turnpoints.append(self.reverse_transform([x[i],y[i]])) 
+            #Halt
+            else:
                 turnpoints.append([-100,-100])
         if(len(x)>1):
             turnpoints.append(self.reverse_transform([x[-1],y[-1]]))
-        self.turning_points[bot_num]=turnpoints
+            self.turning_points[bot_num]=turnpoints
+            self.goal(bot_num)
         print(self.turning_points)
         # print(turnpoints)
         # print('-----------------------------------------------------------')

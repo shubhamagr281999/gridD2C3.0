@@ -4,7 +4,7 @@ global current_pose;
 global img;
 global bot_marker;
 
-n_agents=4;
+n_agents=8;
 current_pose=zeros(n_agents,3);
 bot_marker=uint8(zeros(n_agents,44,44));
 %creating maze with IP
@@ -32,13 +32,18 @@ imwrite(img,'maze.png')
 %with the above operations maze image is ready with each grid of size 54*54
 %pixels
 
-bot_marker(1,:,:)=rgb2gray(imread('bot1.png'));
-bot_marker(2,:,:)=rgb2gray(imread('bot2.png'));
-bot_marker(3,:,:)=rgb2gray(imread('bot3.png'));
-bot_marker(4,:,:)=rgb2gray(imread('bot4.png'));
+bot_marker(1,:,:)=rgb2gray(imread('bot0.png'));
+bot_marker(2,:,:)=rgb2gray(imread('bot1.png'));
+bot_marker(3,:,:)=rgb2gray(imread('bot2.png'));
+bot_marker(4,:,:)=rgb2gray(imread('bot3.png'));
+bot_marker(5,:,:)=rgb2gray(imread('bot4.png'));
+bot_marker(6,:,:)=rgb2gray(imread('bot5.png'));
+bot_marker(7,:,:)=rgb2gray(imread('bot6.png'));
+bot_marker(8,:,:)=rgb2gray(imread('bot7.png'));
 
 figure (1)
 hold on
+imshow(img)
 %% creating subscriber here
 rosshutdown
 rosinit('http://bot:11311/')

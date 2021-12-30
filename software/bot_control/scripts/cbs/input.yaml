@@ -1,16 +1,11 @@
 agents:
--   start: [0, 6, 0]
-    goal: [2, 4, 0]
+-   start: [0, 6]
+    goal: [2, 4]
     name: 0
--   start: [0, 7, 0]
-    goal: [0, 2, 0]
+-   start: [0, 7]
+    goal: [0, 2]
     name: 1
--   start: [13, 5, 0]
-    goal: [5, 2, 0]
-    name: 2
--   start: [8, 0, 0]
-    goal: [0, 7, 0]
-    name: 3
+
 map:
     dimensions: [15, 14]
     obstacles:
@@ -62,6 +57,14 @@ map:
     - !!python/tuple [0,11]
     - !!python/tuple [0,12]
     - !!python/tuple [0,13]
+    - !!python/tuple [1,10]
+    - !!python/tuple [1,11]
+    - !!python/tuple [1,12]
+    - !!python/tuple [1,13]
+    - !!python/tuple [1,0]
+    - !!python/tuple [1,1]
+    - !!python/tuple [1,2]
+    - !!python/tuple [1,3]
 
 
 
