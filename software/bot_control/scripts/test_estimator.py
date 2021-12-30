@@ -17,11 +17,11 @@ class pose_publisher:
         self.pub_poses=rospy.Publisher('/poses',PoseArray,queue_size=1)
         self.poses=PoseArray()
         self.initialize_pose_msg()
-        while not rospy.is_shutdown():
-            self.pose_pub()
-            self.control_rate.sleep()
+        # while not rospy.is_shutdown():
+        #     self.pose_pub()
+        #     self.control_rate.sleep()
         # subscriber
-        # self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
+        self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
         # self.vid = cv2.VideoCapture(0)
 
 
@@ -83,6 +83,7 @@ class pose_publisher:
             self.current_pose[i][0]=msg.poses[i].position.x*0.1+self.current_pose[i][0]
             self.current_pose[i][1]=msg.poses[i].position.y*0.1+self.current_pose[i][1]
             self.current_pose[i][2]=msg.poses[i].position.z*0.1+self.current_pose[i][2]
+        self.pose_pub()
 
     def pose_pub(self):
         for i in range(self.n_agents):

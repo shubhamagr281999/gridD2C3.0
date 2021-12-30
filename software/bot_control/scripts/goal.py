@@ -33,7 +33,7 @@ class goal_publisher:
     def reverse_transform(self,pose):
         return [84-6*pose[1]-3,pose[0]*6+3]
     def plan_callback(self,msg):
-        print('heard from CBS')
+        # print('heard from CBS')
         for i in msg.agent:
             xi=[]
             yi=[]
@@ -71,6 +71,7 @@ class goal_publisher:
         self.turning_points[msg.bot_num]=[[msg.x,msg.y]]
         self.yaw[msg.bot_num]=msg.yaw
         self.goal(msg.bot_num)
+        # print('heard')
 
 
 
@@ -90,7 +91,7 @@ class goal_publisher:
             self.turning_points[bot_num].pop(0)
             self.need_new_plan[bot_num]=0
             self.goal_pub(bot_num,self.yaw[bot_num])
-            print('new goal sent for bot ',bot_num)
+            print('new waypoint sent for bot ',bot_num)
             
         else:
             pub_msgs=UInt8()

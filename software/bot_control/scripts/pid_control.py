@@ -31,16 +31,16 @@ class PID:
         self.kd_soft_lin_y= 5.0/10.0
         self.ki_soft_lin_y= 5.0/2.0
 
-        self.kp_angle= 2.0
-        self.kd_angle= 2.0/10.0
-        self.ki_angle= 2.0/2.0
+        self.kp_angle= 1.0
+        self.kd_angle= 1.0/10.0
+        self.ki_angle= 1.0/2.0
 
-        self.kp_soft_angle= 1.0
-        self.kd_soft_angle= 1.0/10.0
-        self.ki_soft_angle= 1.0/2.0
+        self.kp_soft_angle= 1.0/5
+        self.kd_soft_angle= 1.0/50.0
+        self.ki_soft_angle= 1.0/10.0
 
         self.max_vel_lin= 5.0
-        self.max_vel_ang= 1.0
+        self.max_vel_ang= 0.5
 
         self.intergral_windup_yaw=20.0
         self.intergral_windup_lin_x=15.0
@@ -55,7 +55,7 @@ class PID:
         self.angle_threshold = 0.1
         self.angle_smalldiff = 0.3
 
-        self.halt_time=20  #1 unit here is one time step which is 1/frequncy (control rate)
+        self.halt_time=70  #1 unit here is one time step which is 1/frequncy (control rate)
         # error varibales
         self.lastError_dist_x = np.zeros(self.n_agents)
         self.lastError_dist_y = np.zeros(self.n_agents)
@@ -154,7 +154,7 @@ class PID:
         if (msg.yaw != 100):
             self.goal_pose[msg.bot_num][2]=msg.yaw
         self.need_new_plan[msg.bot_num]=0
-        # print(self.goal_pose)
+        print(self.goal_pose)
 
     def twist_msg(self):
         for i in range(self.n_agents):
@@ -264,8 +264,9 @@ class PID:
                     else:
                         self.w_output[i]=0
 
+                    # print(diff_yaw,distance_y,distance_x)
                     # might have to tweak in case of overshoot or very high time
-                    if(abs(diff_yaw) <= self.angle_threshold and abs(distance_y) < self.lin_y_threshold and abs(distance_x) < self.lin_x_threshold):
+                    if(abs(diff_yaw) <= self.angle_threshold and abs(distance_y) <= self.lin_y_threshold and abs(distance_x) <= self.lin_x_threshold):
                         self.need_new_plan[i]=1
                         self.resetValues(i)
 
@@ -288,6 +289,8 @@ class PID:
                     self.need_new_plan[i]=2
 
             self.twist_msg()
+            print(self.goal_pose)
+            # print(self.need_new_plan)
             # print('hey there')
             self.control_rate.sleep()
 
