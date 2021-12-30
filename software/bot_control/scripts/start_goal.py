@@ -97,8 +97,8 @@ class start_goal_publisher:
             self.current_pose[i][2]=msg.poses[i].position.z
 
             # updating queue_LS_actual based on estimator
-            if(self.current_pose[i][1]<10.5):
-                if(self.current_pose[i][1]<4.5):
+            if(self.current_pose[i][1]<12):
+                if(self.current_pose[i][1]<=7.5):
                     if(self.current_pose[i][0]<28.5 and self.current_pose[i][0]>25.5):
                         self.queue_LS_actual[0][0]=i
                         bot_found[0][0]=1
@@ -106,15 +106,13 @@ class start_goal_publisher:
                         self.queue_LS_actual[1][0]=i
                         bot_found[1][0]=1
                 if(self.current_pose[i][1]>7.5):
-                    for j in range(5):
-                        if(self.current_pose[i][0]<(6*j+4.5) and self.current_pose[i][0]>(6*j+1.5)):
-                            self.queue_LS_actual[0][5-j]=i
-                            bot_found[0][5-j]=1
-                            break
-                        if(self.current_pose[i][0]<(6*(j+9)+4.5) and self.current_pose[i][0]>(6*(j+9)+1.5)):
-                            self.queue_LS_actual[1][j+1]=i
-                            bot_found[1][j+1]=1
-                            break
+                    if self.current_pose[i][0]<30:
+                        self.queue_LS_actual[0][((30-self.current_pose[i][0])//6)+1]=i
+                        bot_found[0][((30-self.current_pose[i][0])//6)+1]=1
+                    elif self.current_pose[i][0]>54:
+                        self.queue_LS_actual[0][((self.current_pose[i][0]-54)//6)+1]=i
+                        bot_found[0][((self.current_pose[i][0]-54)//6)+1]=1
+
         not_bot=np.where(bot_found==0)
         for i in range(np.shape(not_bot)[1]):
             self.queue_LS_actual[not_bot[0][i]][not_bot[1][i]]=-1
