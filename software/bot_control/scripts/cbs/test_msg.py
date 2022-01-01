@@ -15,13 +15,13 @@ class pose_publisher:
         # self.msg.y=2.0
         # self.msg.yaw=2.0
         # self.msg.bot_num=1
-        self.data.start_x=[4,3]
-        self.data.start_y=[5,4]
-        self.data.start_d=[0,0]
-        self.data.goal_x=[1,2]
-        self.data.goal_y=[4,3]
-        self.data.goal_d=[0,0]
-        self.data.bot_num=[0,1]
+        self.data.start_x=[0,6,2,1]
+        self.data.start_y=[4,9,10,3]
+        self.data.start_d=[0,0,0,0]
+        self.data.goal_x=[11,2,1,1]
+        self.data.goal_y=[12,11,10,3]
+        self.data.goal_d=[0,0,0,0]
+        self.data.bot_num=[0,3,2,1]
 
 
         # print(self.data)

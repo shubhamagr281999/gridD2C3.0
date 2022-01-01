@@ -8,7 +8,7 @@ from geometry_msgs.msg import Pose, PoseArray
 
 class pose_publisher:
     def __init__(self):
-        self.n_agents=8
+        self.n_agents=4
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
         self.control_rate=rospy.Rate(10)

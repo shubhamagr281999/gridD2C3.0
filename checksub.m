@@ -4,7 +4,7 @@ global current_pose;
 global img;
 global bot_marker;
 
-n_agents=8;
+n_agents=4;
 current_pose=zeros(n_agents,3);
 bot_marker=uint8(zeros(n_agents,44,44));
 %creating maze with IP

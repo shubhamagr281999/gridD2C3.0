@@ -3,17 +3,18 @@
 import rospy
 from time import sleep
 from std_msgs.msg import UInt8
-from bot_control.msg import CompletePlan, pose_bot
+from bot_control.msg import CompletePlan, pose_bot, Bot_status
 import numpy as np
 
 class goal_publisher:
     def __init__(self):
         # self.rate=rospy.Rate(0.5)
-        self.n_agents=8
+        self.n_agents=4
         self.goal_pose=np.zeros([self.n_agents,3])
         self.turning_points=self.empty_list(self.n_agents)
         self.need_new_plan=np.zeros(self.n_agents)
         self.yaw=np.zeros(self.n_agents)+100
+        self.bot_status=np.zeros(self.n_agents)
 
         # publishers
         self.pub_goal=rospy.Publisher('/goal_point',pose_bot,queue_size=10)
@@ -23,6 +24,11 @@ class goal_publisher:
         self.plans_callback=rospy.Subscriber("/cbs/plan",CompletePlan,self.plan_callback,queue_size=10)
         self.sub_flag_pid = rospy.Subscriber("/flag_pid",UInt8,self.flag_pid_callback,queue_size=10)
         self.one_step_goal = rospy.Subscriber("/one_step_goal",pose_bot,self.one_step_callback,queue_size=10)
+        self.botStatus_sub = rospy.Subscriber('/bot_status',Bot_status,self.bot_status_callback,queue_size=10)
+
+    def bot_status_callback(self,msg):
+        for i in range(self.n_agents):
+            self.bot_status[i]=msg.status[i]
 
     def empty_list(self,i):
         k=[]
@@ -32,9 +38,12 @@ class goal_publisher:
 
     def reverse_transform(self,pose):
         return [84-6*pose[1]-3,pose[0]*6+3]
+
     def plan_callback(self,msg):
         # print('heard from CBS')
         for i in msg.agent:
+            if(self.bot_status[int(i.bot_num)]<3):
+                continue
             xi=[]
             yi=[]
             di=[]
@@ -46,6 +55,7 @@ class goal_publisher:
 
     def turning_point(self,x,y,d,bot_num):
         turnpoints=[]
+        # turnpoints.append(self.reverse_transform([x[0],y[0]]))
         for i in range(1,len(x)-1):
 
         #     #print("hi")
@@ -74,7 +84,6 @@ class goal_publisher:
         # print(turnpoints)
         # print('-----------------------------------------------------------')
 
-
     def flag_pid_callback(self,msg):
         self.need_new_plan[msg.data]=1
         self.goal(msg.data)        
@@ -84,8 +93,6 @@ class goal_publisher:
         self.yaw[msg.bot_num]=msg.yaw
         self.goal(msg.bot_num)
         # print('heard')
-
-
 
     def goal_pub(self,bot_num,yaw):
         msg=pose_bot()
