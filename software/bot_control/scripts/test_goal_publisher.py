@@ -1,4 +1,5 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+
 import rospy
 import cv2
 from time import sleep
@@ -8,10 +9,10 @@ from bot_control.msg import pose_bot
 
 class goal_publisher:
     def __init__(self):
-        self.n_agents=1
+        self.n_agents=4
         self.control_rate=rospy.Rate(10)
         self.goal_pose=np.zeros([self.n_agents,3])
-        self.goal_pose[0] = [100, 100, 0]
+        self.goal_pose[0] = [24, 33, 1.572]
         self.pub_goal=rospy.Publisher('/goal_point',pose_bot,queue_size=10)
         msg=pose_bot()
         bot_num = 0 #considering only 1 bot for testing

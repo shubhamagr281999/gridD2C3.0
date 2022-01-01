@@ -45,7 +45,7 @@ class start_goal_publisher:
     def __init__(self):
 
         self.rate=rospy.Rate(10)
-        self.n_agents=4
+        self.n_agents=6
         
         self.lossfunction_para1= 0.01  #weighted loss function-LS selection  para1 for distance
         self.lossfunction_para2= 10 # para2 for queue size
@@ -236,8 +236,10 @@ class start_goal_publisher:
         if(Ls0==-1 and Ls1==-1):
             print('overcrowded LS need to wait')
         if(Ls1==-1):
+            self.LS_assigned[bot_num]= 0
             return 0
         if(Ls0==-1):
+            self.LS_assigned[bot_num]= 1
             return 1
         if (Loss_function_LS0 > Loss_function_LS1):
             print('assgined LS1')
@@ -262,6 +264,9 @@ class start_goal_publisher:
         return sqrt( x**2 + y**2 )
 
     def CBS_plan(self):
+        print('in CBS function')
+        print(self.bot_status,'Bot status')
+        print(self.assigned_dest_location,'assigned dest location')
         msg=StartGoal()
         k=np.where(self.bot_status==3)[0]
         p=np.where(self.bot_status==6)[0]
@@ -293,18 +298,22 @@ class start_goal_publisher:
             goal_pose=self.transform(self.current_pose[i])
             msg.goal_x.append(goal_pose[0])
             msg.goal_y.append(goal_pose[1])
-            msg.goal_d.append(goal_pose[2])      
-
-
+            msg.goal_d.append(goal_pose[2])   
         self.dest_pub.publish(msg)
+
+    def location_equality(self,pose1,pose2):
+        pose1=self.transform(pose1)
+        pose2=self.transform(pose2)
+        return (pose1[0]==pose2[0] and pose1[1]==pose2[1])
 
     def new_plan_callback(self,msg):
         print('bot ',msg.data, ' needs new status. current status: ' ,self.bot_status[msg.data])
         print(self.queue_LS_pseudo_actual,self.queue_LS_assigned)
         if(self.bot_status[msg.data]==6): #status was going to LS assigned it reached means now LS_assigned to LS_psuedo needs to be given
-            self.bot_status[msg.data]=0
             # print(self.queue_LS_assigned)
-            LS_=int(self.LS_assigned[msg.data])            
+            self.bot_status[msg.data]=0
+            LS_=int(self.LS_assigned[msg.data])
+            print(LS_,'assgined LS for bot ',msg.data)            
             k=np.where(self.queue_LS_assigned[LS_]==msg.data)[0][0]
             n=self.last_zero_index(self.queue_LS_pseudo_actual[LS_])
             if(k>n):
@@ -317,11 +326,8 @@ class start_goal_publisher:
                     self.queue_LS_assigned[LS_][n]=msg.data
             self.queue_LS_pseudo_actual[LS_][n]=msg.data
             self.assigned_dest_location[msg.data]=[self.LS_queue_locations[LS_][n+2][0],self.LS_queue_locations[LS_][n+2][1],100]
-            print('insering a bot into queue -------------------------------------------')
-            # print(self.queue_LS_assigned)
-            # print(self.queue_LS_pseudo_actual)
-            self.one_step_publish_(self.LS_queue_locations[LS_][n+2],100,msg.data)
-            
+            print('called for going to LS_actual')
+            self.CBS_plan()            
 
         elif(self.bot_status[msg.data]==0 or self.bot_status[msg.data]==1): #status was 0 it means it has reached in the LS_queue
             self.bot_status[msg.data]=1
@@ -334,15 +340,17 @@ class start_goal_publisher:
                 if(self.queue_LS_actual[LS_][0]==-1 and self.queue_LS_actual[LS_][1]==-1):
                     if(self.queue_LS_assigned[LS_][0]==msg.data):
                         self.queue_LS_assigned[LS_][0]=-1
-                    self.queue_LS_pseudo_actual[LS_][0]=-1
                     self.one_step_publish_(self.LS_queue_locations[LS_][1],100,msg.data)
                     print('at second position. ----------------------------------------------------')
+                    self.queue_LS_pseudo_actual[LS_][k-2]=msg.data
+                    self.queue_LS_pseudo_actual[LS_][k-1]=-1
                     # print(self.queue_LS_assigned)
                     # print(self.queue_LS_pseudo_actual)
                 else :
-                    self.one_step_publish_([-100,-100],100,msg.data) #halt
-
+                    self.one_step_publish_([-100,2],100,msg.data) #halt
+                    
             elif(k==1):
+                self.queue_LS_pseudo_actual[LS_][0]=-1
                 if(self.queue_LS_actual[LS_][0]==-1):
                     self.one_step_publish_(self.LS_queue_locations[LS_][0],100,msg.data)
                 else:
@@ -351,7 +359,7 @@ class start_goal_publisher:
                     self.one_step_publish_(self.LS_queue_locations[LS_][2],100,msg.data)
 
             elif(k==0):
-                self.one_step_publish_([-100,-100],100,msg.data)
+                self.one_step_publish_([-100,5],100,msg.data)
                 self.bot_status[msg.data]=2
             else:
                 if(self.queue_LS_actual[LS_][k-1]==-1):
@@ -360,16 +368,18 @@ class start_goal_publisher:
                         self.queue_LS_assigned[LS_][k-3]=msg.data
                     if(self.queue_LS_assigned[LS_][k-2]==msg.data):                        
                         self.queue_LS_assigned[LS_][k-2]=-1
-                    self.queue_LS_pseudo_actual[LS_][k-2]=-1
-                    self.queue_LS_pseudo_actual[LS_][k-3]=msg.data
+                    self.queue_LS_pseudo_actual[LS_][k-2]=msg.data
+                    if(k<5):
+                        self.queue_LS_pseudo_actual[LS_][k-1]=-1
                 else:
-                    self.one_step_publish_([-100,-100],100,msg.data)
+                    self.one_step_publish_([-100,2],100,msg.data)
 
         elif(self.bot_status[msg.data]==2): #it was halting at LS for parcel and now it needs to go to destination
             LS_=int(self.LS_assigned[msg.data])
             self.LS_assigned[msg.data]=-1
             dest_id=self.dest_assigner.assign(LS_)
             dest_block=self.preffered_dest_block(dest_id) #if -1 if retuned | code for it -------------------------------------------------------------
+            print(dest_block)
             self.delivery_block_occupancy[dest_id][dest_block]=msg.data
             self.bot_status[msg.data]=3
             flip_direction=0
@@ -377,6 +387,7 @@ class start_goal_publisher:
                 flip_direction=pi/2
             self.assigned_dest_location[msg.data]=[self.grid_locations[dest_id][dest_block][0],self.grid_locations[dest_id][dest_block][1],flip_direction]
             # print(self.bot_status)
+            print('called for going to delivery zone')
             self.CBS_plan()
 
         elif(self.bot_status[msg.data]==3): # it was going from LS-dest, It would have reached there. Need to align for parcel drop
@@ -385,7 +396,7 @@ class start_goal_publisher:
 
         elif(self.bot_status[msg.data]==4): #bot has aligend itself now need to drop parcel
             self.bot_status[msg.data]=5
-            self.one_step_publish_([-100,-100],100,msg.data)
+            self.one_step_publish_([-100,5],100,msg.data)
             msg_flip=UInt8()
             msg_flip.data=msg.data
             self.flipMotor_pub.publish(msg_flip)

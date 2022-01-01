@@ -9,22 +9,25 @@ import requests
 class pose_publisher:
     def __init__(self):
         self.pub_test=rospy.Publisher('/test_com',Int16,queue_size=1)
+        self.sub=rospy.Subscriber('/test_com',Int16,self.callback,queue_size=1)
         self.msg=Int16()
         self.msg.data=1;
         self.rate=rospy.Rate(10)
-        self.url='http://192.168.0.250/'
-        rospy.Subscriber('/test_com',Int16,self.callback)
-        time.sleep(2)
+        # self.url='http://192.168.0.250/'
+        # rospy.Subscriber('/test_com',Int16,self.callback)
+        # time.sleep(2)
         # print("publihsed to cbs")
             # time.sleep(2)
     def callback(self,msg):
-        print(msg.data)
+        print('----------------------------------------',msg.data)
+        time.sleep(2)
         # x = requests.post(self.url, data=str(msg.data))
         # print(x.text)
     def pubjj(self):
         while not rospy.is_shutdown():
             self.msg.data+=1
-            self.msg.data=self.msg.data%20
+            print('publishing', self.msg.data)
+            self.msg.data=self.msg.data%17
             self.pub_test.publish(self.msg)
             self.rate.sleep()
 if __name__ == '__main__':
