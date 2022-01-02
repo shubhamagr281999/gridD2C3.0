@@ -12,7 +12,7 @@ class communication:
         self.wheel_status= rospy.Subscriber('/wheel_speed',PoseArray,self.wheel_speed_callback, queue_size=10)
         self.flipper_status= rospy.Subscriber('/flipper',UInt8,self.flipper_callback, queue_size=10)
         self.rate=rospy.Rate(10)
-        self.url='http://192.168.0.24'
+        self.url='http://192.168.68.24'
 
        
     def wheel_speed_callback(self,msg):

@@ -3,12 +3,12 @@
 #include <ESP8266WebServer.h>
 #include <Servo.h>
 
-IPAddress local_IP(192, 168, 0, 240);
-IPAddress gateway(192, 168, 0, 1); 
+IPAddress local_IP(192, 168, 68, 240);
+IPAddress gateway(192, 168, 68, 1); 
 IPAddress subnet(255, 255, 255, 0);
 
-const char* ssid = "TP-Link_37FE";
-const char* password = "12345678";
+const char* ssid = "Tinkerers' Lab";
+const char* password = "tinker@tl";
 
 double OL=0;
 double OR=0;
@@ -76,12 +76,12 @@ void control(){
       analogWrite(r2,-1*OR);
     }
     if(OF>0){
-      analogWrite(r1,OF);
-      analogWrite(r2,0);
+      analogWrite(f1,OF);
+      analogWrite(f2,0);
     }
     else{
-      analogWrite(r1,0);
-      analogWrite(r2,-1*OF);
+      analogWrite(f1,0);
+      analogWrite(f2,-1*OF);
     }
   }
   
