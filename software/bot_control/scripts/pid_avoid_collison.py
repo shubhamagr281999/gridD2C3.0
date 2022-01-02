@@ -13,10 +13,9 @@ from time import sleep
 
 class PID:
     def __init__(self):
-        self.n_agents=4
+        self.n_agents=6
         self.control_rate=rospy.Rate(10)
 
-        self.collision_history = []
 
         # defining tunable params
         self.kp_lin_x= 1.0
@@ -158,7 +157,7 @@ class PID:
         if (msg.yaw != 100):
             self.goal_pose[msg.bot_num][2]=msg.yaw
         self.need_new_plan[msg.bot_num]=0
-        print(self.goal_pose)
+        # print(self.goal_pose)
     #
     # def check_collision(self):
     #     bot_num = []             #an array of bot_num [0,1,2,3 ...]
@@ -209,10 +208,6 @@ class PID:
     #                     self.cmd_vel_msg.poses[pair[1]].position.z= 0
 
     def check_collision(self):
-
-        for i in self.collision_history:
-            if (self.current_pose[i[0]][0] > (self.goal_pose[i[0]][0] + 6)) or (self.current_pose[i[0]][1] > (self.goal_pose[i[0]][1] + 6)):
-                self.goal_pose[i[1]] = i[3]
         bot_num = []             #an array of bot_num [0,1,2,3 ...]
 
         for i in range(self.n_agents):
@@ -220,17 +215,6 @@ class PID:
         pair_list = itertools.combinations(bot_num,2)  # all combination pairs [[0,1],[0,2],[0,3]....]
 
         for pair in pair_list:
-
-            b = False
-            for i in self.collision_history:
-                if i[0] == pair[0] and i[1] == pair[1]:
-                    b = True
-                    break
-                if i[0] == pair[1] and i[1] == pair[0]:
-                    b = True
-                    break
-            if b:
-                continue
 
             x1 = self.current_pose[pair[0]][0]
             y1 = self.current_pose[pair[0]][1]
@@ -261,32 +245,57 @@ class PID:
             y_c = (x2-x1+r1*y1-r2*y2)/(r1-r2)
             x_c = x1 + ((y_c-y1)*r1)
 
-            if((x_c-x1)*(gx1-x_c)>=0 && (y_c-y1)*(gy1-y_c)>=0 && (x_c-x2)*(gx2-x_c)>=0 && (y_c-y2)*(gy2-y_c)>=0):
-                t1 = sqrt((x1-gx1)**2 + (y1-gy1)**2)/v1
-                t2 = sqrt((x2-gx2)**2 + (y2-gy2)**2)/v2
+            d1 = sqrt((x1-x_c)**2 + (y1-y_c)**2)
+            d2 = sqrt((x2-x_c)**2 + (y2-y_c)**2)
 
-                if ( t1 < t2):
-                    print("Predicted Collision between bot", pair[0], "and bot", pair[1], "distance:", distance, "in ", time ,"Seconds")
-                    self.collision_history += [[pair[0], pair[1], (x_c, y_c), (gx2, gy2)]]
+            if vx1==0 and vy1==0:
+                continue
+
+            if vx2==0 and vy2==0:
+                continue
+
+            if d1<=9 and d2<=9:
+                if d2>d1:
+                    print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
                     self.v_x_output[pair[1]] = 0            #stopping bot_2
                     self.v_y_output[pair[1]] = 0
                     self.w_output[pair[1]] = 0
-                    self.cmd_vel_msg.poses[pair[1]].position.x= 0
-                    self.cmd_vel_msg.poses[pair[1]].position.y = 0
-                    self.cmd_vel_msg.poses[pair[1]].position.z= 0
-
-                if ( t1 > t2):
-                    print("Predicted Collision between bot", pair[0], "and bot", pair[1], "distance:", distance, "in ", time ,"Seconds")
-                    self.collision_history += [[pair[1], pair[0], (x_c, y_c), (gx1, gy1)]]
-                    self.v_x_output[pair[0]] = 0            #stopping bot_1
+                else:
+                    print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
+                    self.v_x_output[pair[0]] = 0            #stopping bot_2
                     self.v_y_output[pair[0]] = 0
                     self.w_output[pair[0]] = 0
-                    self.cmd_vel_msg.poses[pair[0]].position.x= 0
-                    self.cmd_vel_msg.poses[pair[0]].position.y = 0
-                    self.cmd_vel_msg.poses[pair[0]].position.z= 0
+
+            # if((x_c-x1)*(gx1-x_c)>=0 and (y_c-y1)*(gy1-y_c)>=0 and (x_c-x2)*(gx2-x_c)>=0 and (y_c-y2)*(gy2-y_c)>=0):
+
+            #     t1 = sqrt((x1-gx1)**2 + (y1-gy1)**2)/(v1+0.001)
+            #     t2 = sqrt((x2-gx2)**2 + (y2-gy2)**2)/(v2+0.001)
+
+            #     if ( t1 < t2):
+            #         print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
+            #         self.collision_history += [[pair[0], pair[1], (x_c, y_c), (gx2, gy2)]]
+            #         self.v_x_output[pair[1]] = 0            #stopping bot_2
+            #         self.v_y_output[pair[1]] = 0
+            #         self.w_output[pair[1]] = 0
+            #         self.cmd_vel_msg.poses[pair[1]].position.x= 0
+            #         self.cmd_vel_msg.poses[pair[1]].position.y = 0
+            #         self.cmd_vel_msg.poses[pair[1]].position.z= 0
+
+            #     if ( t1 > t2):
+            #         print("Predicted Collision between bot", pair[0], "and bot", pair[1],  "in ", time ,"Seconds")
+            #         self.collision_history += [[pair[1], pair[0], (x_c, y_c), (gx1, gy1)]]
+            #         self.v_x_output[pair[0]] = 0            #stopping bot_1
+            #         self.v_y_output[pair[0]] = 0
+            #         self.w_output[pair[0]] = 0
+            #         self.cmd_vel_msg.poses[pair[0]].position.x= 0
+            #         self.cmd_vel_msg.poses[pair[0]].position.y = 0
+            #         self.cmd_vel_msg.poses[pair[0]].position.z= 0
 
 
     def twist_msg(self):
+        #check for Collision
+        self.check_collision()
+
         for i in range(self.n_agents):
             if abs(self.v_x_output[i])>self.max_vel_lin :
                 self.cmd_vel_msg.poses[i].position.x = self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]
@@ -309,8 +318,6 @@ class PID:
         # computing the wheel speeds
         self.inverse_tranform()
 
-        #check for Collision
-        self.check_collision()
 
         self.control_input_pub.publish(self.cmd_vel_msg)
         self.wheel_speed_pub.publish(self.wheel_vel_msg)
@@ -455,12 +462,12 @@ class PID:
                 if(self.need_new_plan[i] == 1):
                     pub_msgs=UInt8()
                     pub_msgs.data=i
-                    print('bot: ',i, ' needs new waypoint')
+                    # print('bot: ',i, ' needs new waypoint')
                     self.flag_pid_pub.publish(pub_msgs)
                     self.need_new_plan[i]=2
 
             self.twist_msg()
-            print(self.goal_pose)
+            # print(self.goal_pose)
             # print(self.need_new_plan)
             # print('hey there')
             self.control_rate.sleep()
