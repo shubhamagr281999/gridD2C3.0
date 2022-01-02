@@ -41,8 +41,8 @@ class PID:
         self.kd_soft_angle= 1.0/50.0
         self.ki_soft_angle= 1.0/10.0
 
-        self.max_vel_lin= 5.0
-        self.max_vel_ang= 0.5
+        self.max_vel_lin= 4.0
+        self.max_vel_ang= 0.4
 
         self.intergral_windup_yaw=20.0
         self.intergral_windup_lin_x=15.0
@@ -57,7 +57,7 @@ class PID:
         self.angle_threshold = 0.1
         self.angle_smalldiff = 0.3
 
-        self.halt_time=70  #1 unit here is one time step which is 1/frequncy (control rate)
+        self.halt_unit=10  #1 count is one time step which is 1/frequncy (control rate)
         # error varibales
         self.lastError_dist_x = np.zeros(self.n_agents)
         self.lastError_dist_y = np.zeros(self.n_agents)
@@ -141,7 +141,7 @@ class PID:
         for i in range(self.n_agents):
             temp_poses.append(Pose())
             temp_poses2.append(Pose())
-        self.cmd_vel_msg.poses=temp_poses        
+        self.cmd_vel_msg.poses=temp_poses        #why is this cmd_vel_msg."poses"???
         self.wheel_vel_msg.poses=temp_poses2
 
     def current_state_callback(self,msg):
@@ -156,12 +156,12 @@ class PID:
         if (msg.yaw != 100):
             self.goal_pose[msg.bot_num][2]=msg.yaw
         self.need_new_plan[msg.bot_num]=0
-        # print(self.goal_pose)
+        print(self.goal_pose)
 
     def check_collision(self):
         bot_num = []             #an array of bot_num [0,1,2,3 ...]
         time_limit = 4           #how much far ahead do we want to predict collision
-        threshold = 10           #threshold distance
+        threshold = 7           #threshold distance
         for i in range(self.n_agents):
             bot_num.append(i)
         pair_list = itertools.combinations(bot_num,2)  # all combination pairs [[0,1],[0,2],[0,3]....]
@@ -175,15 +175,37 @@ class PID:
 
                 distance = sqrt((x1-x2)**2 + (y1-y2)**2)
 
-                if ( distance <= threshold):
+                vx1 = self.v_x_output[pair[0]]
+                vy1 = self.v_y_output[pair[0]]
+                vx2 = self.v_x_output[pair[1]]
+                vy2 = self.v_y_output[pair[1]]
+
+                v1 = sqrt((vx1)**2 + (vy1)**2)
+                v2 = sqrt((vx2)**2 + (vy2)**2)
+
+                dot_prod = (vx2 - vx1)*(x1-x2) +  (vy2 - vy1)*(y1-y2)
+
+                if ( distance <= threshold ) and ( (v2 - v1)*dot_prod >0 ):
                     print("Predicted Collision between bot", pair[0], "and bot", pair[1], "distance:", distance, "in ", time ,"Seconds")
 
-                    self.v_x_output[pair[0]] = 0            #arbitrarily we are choosing to stop one bot in case of expected collsion
-                    self.v_y_output[pair[0]] = 0
-                    self.w_output[pair[0]] = 0
-                    self.cmd_vel_msg.poses[pair[0]].position.x= 0
-                    self.cmd_vel_msg.poses[pair[0]].position.y = 0
-                    self.cmd_vel_msg.poses[pair[0]].position.z= 0
+                    if( v1 - v2) > 0:    #implies v1> v2 and obtuse angle(dot_product <0) = collision = stop bot 1
+
+                        self.v_x_output[pair[0]] = 0            #stopping bot_1
+                        self.v_y_output[pair[0]] = 0
+                        self.w_output[pair[0]] = 0
+                        self.cmd_vel_msg.poses[pair[0]].position.x= 0
+                        self.cmd_vel_msg.poses[pair[0]].position.y = 0
+                        self.cmd_vel_msg.poses[pair[0]].position.z= 0
+
+                    if( v2 - v1) > 0:   #implies v2>v1 and acute angle = stop bot 2
+
+                        self.v_x_output[pair[1]] = 0            #stopping bot_2
+                        self.v_y_output[pair[1]] = 0
+                        self.w_output[pair[1]] = 0
+                        self.cmd_vel_msg.poses[pair[1]].position.x= 0
+                        self.cmd_vel_msg.poses[pair[1]].position.y = 0
+                        self.cmd_vel_msg.poses[pair[1]].position.z= 0
+
 
     def twist_msg(self):
         for i in range(self.n_agents):
@@ -208,7 +230,7 @@ class PID:
         # computing the wheel speeds
         self.inverse_tranform()
 
-        #checking for collision
+        #check for Collision
         self.check_collision()
 
         self.control_input_pub.publish(self.cmd_vel_msg)
@@ -248,39 +270,73 @@ class PID:
                     diff_yaw=self.correct_diff_yaw(self.goal_pose[i][2]-self.current_pose[i][2])
                     distance_x= self.goal_pose[i][0] - self.current_pose[i][0]
                     distance_y= self.goal_pose[i][1] - self.current_pose[i][1]
-                    #PID along y
-                    if (abs(distance_y) > self.lin_y_smalldiff):
-                        self.v_y_output[i] = self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
-                        self.lastError_dist_y[i]= distance_y
-                        if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
-                            self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
-
-                    elif (abs(distance_y) <= self.lin_y_smalldiff and abs(distance_y) > self.lin_y_threshold):
-                        self.v_y_output[i] = self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
-                        self.lastError_dist_y[i]= distance_y
-                        if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
-                            self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
-
-                    else:
-                        self.v_y_output[i]=0
-
                     #PID along x
-                    if (abs(distance_x) > self.lin_x_smalldiff):
-                        self.v_y_output[i]=0
+                    if(abs(distance_x)>=abs(distance_y)):
+                        if (abs(distance_y) > self.lin_y_smalldiff): #moving in x only after in line of motion
+                            self.v_y_output[i] = self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
+                            self.lastError_dist_y[i]= distance_y
+                            if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
+                                self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
+                            self.v_x_output[i] =0
 
-                        self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
-                        self.lastError_dist_x[i]= distance_x
-                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
-                            self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+                        else : #moving in x
+                            #minor corrections in y
+                            if abs(distance_y)<self.lin_y_threshold :
+                                self.v_y_output[i]=0
+                            else :
+                                self.v_y_output[i] = self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
+                                self.lastError_dist_y[i]= distance_y
+                                if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
+                                    self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
 
-                    elif (abs(distance_x) <= self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
-                        self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
-                        self.lastError_dist_x[i]= distance_x
-                        if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
-                            self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+                            #PID along x
+                            if (abs(distance_x) > self.lin_x_smalldiff):
+                                self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
+                                self.lastError_dist_x[i]= distance_x
+                                if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                                    self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
 
-                    else:
-                        self.v_x_output[i]=0
+                            elif (abs(distance_x) <= self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
+                                self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
+                                self.lastError_dist_x[i]= distance_x
+                                if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                                    self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+
+                            else:
+                                self.v_x_output[i]=0
+                    else:  #PID along y
+
+                        if (abs(distance_x) > self.lin_x_smalldiff):
+                            if (abs(distance_x) > self.lin_x_smalldiff):
+                                self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
+                                self.lastError_dist_x[i]= distance_x
+                                if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                                    self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+                                self.v_y_output[i]=0
+
+                        else:
+                            if(abs(distance_x)<self.lin_x_threshold):
+                                self.v_x_output[i]=0
+                            else :
+                                self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
+                                self.lastError_dist_x[i]= distance_x
+                                if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                                    self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+                            #PID along y
+                            if (abs(distance_y) > self.lin_y_smalldiff): #moving in x only after in line of motion
+                                self.v_y_output[i] = self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
+                                self.lastError_dist_y[i]= distance_y
+                                if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
+                                    self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
+                            elif(abs(distance_y)>self.lin_y_threshold):
+                                self.v_y_output[i] = self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
+                                self.lastError_dist_y[i]= distance_y
+                                if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
+                                    self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
+                            else :
+                                self.v_y_output[i]=0
+
+
 
                     #PID angular
                     if (abs(diff_yaw) > self.angle_smalldiff):
@@ -301,11 +357,14 @@ class PID:
                     if(abs(diff_yaw) <= self.angle_threshold and abs(distance_y) <= self.lin_y_threshold and abs(distance_x) <= self.lin_x_threshold):
                         self.need_new_plan[i]=1
                         self.resetValues(i)
+                        self.v_x_output[i]=0
+                        self.v_y_output[i]=0
+                        self.w_output[i]=0
 
 
                     # for halt we appned -100,-100 to goal_pose hence the below thing for the same
-                    if (self.goal_pose[i][0]==-100 and self.goal_pose[i][0]==-100):
-                        if(self.halt_count[i] < self.halt_time):
+                    if (self.goal_pose[i][0]==-100 ):
+                        if(self.halt_count[i] < self.halt_unit*self.goal_pose[i][1]):
                             self.halt_count[i]=self.halt_count[i]+1
                         else :
                             self.need_new_plan[i]=1
@@ -313,6 +372,7 @@ class PID:
                         self.v_x_output[i]=0.0
                         self.v_y_output[i]=0.0
                         self.w_output[i]=0.0
+
                 if(self.need_new_plan[i] == 1):
                     pub_msgs=UInt8()
                     pub_msgs.data=i
@@ -330,7 +390,7 @@ class PID:
 if __name__ == '__main__':
 
     rospy.init_node('controller_node')
-    rospy.loginfo("controller_node for bots created")
+    rospy.loginfo("controller_node for bot1 created")
     pid_controller=PID()
     sleep(7)
     pid_controller.pid()
