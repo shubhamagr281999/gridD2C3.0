@@ -4,7 +4,7 @@ import rospy
 from math import ceil,pi,sqrt
 import pandas as pd
 from time import sleep
-from std_msgs.msg import UInt8
+from std_msgs.msg import Bool, UInt8
 from bot_control.msg import StartGoal, CompletePlan, PathArray, pose_bot,Bot_status
 from geometry_msgs.msg import PoseArray, PointStamped
 import numpy as np
@@ -72,6 +72,7 @@ class start_goal_publisher:
         #subscribers
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
         self.new_plan_sub=rospy.Subscriber('/new_plan',UInt8,self.new_plan_callback,queue_size=10)
+        self.bot_collision=rospy.Subscriber('/direct_collision',Bool,self.collision_callback,queue_size=1)
 
         # publishers
         self.dest_pub=rospy.Publisher('/start_goal_agents',StartGoal,queue_size=10)
@@ -89,6 +90,9 @@ class start_goal_publisher:
         self.one_step_msg.yaw=yaw
         # print('published')
         self.one_step_goal_pub.publish(self.one_step_msg)
+
+    def collision_callback(self,msg):
+        self.CBS_plan()
 
     def current_state_callback(self,msg):
         bot_found=np.zeros([2,6])

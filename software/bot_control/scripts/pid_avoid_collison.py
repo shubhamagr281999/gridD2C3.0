@@ -90,6 +90,7 @@ class PID:
         self.wheel_vel_msg=PoseArray() # here we use only poistion of Poses msg. x will have w1, y will be w1 and z will be w3 in position object
         self.initialize_cmd_vel_msg()
         self.flag_pid_pub = rospy.Publisher('/flag_pid',UInt8,queue_size=10)
+        self.collision_pub = rospy.Publisher('/direct_collision',Bool,queue_size=10)
 
         # subscribers
         self.current_state_sub=rospy.Subscriber('/poses', PoseArray,self.current_state_callback,queue_size=10)
@@ -254,7 +255,17 @@ class PID:
             if vx2==0 and vy2==0:
                 continue
 
-            if d1<=9 and d2<=9:
+            if d1<=6 and d2<=6:
+                # if (vx1==0 and vx2==0) or (vy1==0 and vy2==0):
+                #     print(vx1,vx2,vy1,vy2)
+                #     print("maa chudao")
+                #     for i in bot_num:
+                #         self.v_x_output[i] = 0
+                #         self.v_y_output[i] = 0
+                #         self.w_output[i] = 0
+                #     collision_msg=Bool()
+                #     collision_msg.data=True
+                #     self.collision_pub.publish(collision_msg)
                 if d2>d1:
                     print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
                     self.v_x_output[pair[1]] = 0            #stopping bot_2
