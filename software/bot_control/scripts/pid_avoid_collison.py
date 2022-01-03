@@ -159,148 +159,153 @@ class PID:
             self.goal_pose[msg.bot_num][2]=msg.yaw
         self.need_new_plan[msg.bot_num]=0
         # print(self.goal_pose)
-    #
-    # def check_collision(self):
-    #     bot_num = []             #an array of bot_num [0,1,2,3 ...]
-    #     time_limit = 4           #how much far ahead do we want to predict collision
-    #     threshold = 7           #threshold distance
-    #     for i in range(self.n_agents):
-    #         bot_num.append(i)
-    #     pair_list = itertools.combinations(bot_num,2)  # all combination pairs [[0,1],[0,2],[0,3]....]
-    #
-    #     for pair in pair_list:
-    #         for time in range(time_limit):
-    #             x1 = self.current_pose[pair[0]][0] + self.v_x_output[pair[0]]*time
-    #             y1 = self.current_pose[pair[0]][1] + self.v_y_output[pair[0]]*time
-    #             x2 = self.current_pose[pair[1]][0] + self.v_x_output[pair[1]]*time
-    #             y2 = self.current_pose[pair[1]][1] + self.v_y_output[pair[1]]*time
-    #
-    #             distance = sqrt((x1-x2)**2 + (y1-y2)**2)
-    #
-    #             vx1 = self.v_x_output[pair[0]]
-    #             vy1 = self.v_y_output[pair[0]]
-    #             vx2 = self.v_x_output[pair[1]]
-    #             vy2 = self.v_y_output[pair[1]]
-    #
-    #             v1 = sqrt((vx1)**2 + (vy1)**2)
-    #             v2 = sqrt((vx2)**2 + (vy2)**2)
-    #
-    #             dot_prod = (vx2 - vx1)*(x1-x2) +  (vy2 - vy1)*(y1-y2)
-    #
-    #             if ( distance <= threshold ) and ( (v2 - v1)*dot_prod >0 ) and (v1*v2 !=0):
-    #                 print("Predicted Collision between bot", pair[0], "and bot", pair[1], "distance:", distance, "in ", time ,"Seconds")
-    #
-    #                 if( v1 - v2) > 0:    #implies v1> v2 and obtuse angle(dot_product <0) = collision = stop bot 1
-    #
-    #                     self.v_x_output[pair[0]] = 0            #stopping bot_1
-    #                     self.v_y_output[pair[0]] = 0
-    #                     self.w_output[pair[0]] = 0
-    #                     self.cmd_vel_msg.poses[pair[0]].position.x= 0
-    #                     self.cmd_vel_msg.poses[pair[0]].position.y = 0
-    #                     self.cmd_vel_msg.poses[pair[0]].position.z= 0
-    #
-    #                 if( v2 - v1) > 0:   #implies v2>v1 and acute angle = stop bot 2
-    #
-    #                     self.v_x_output[pair[1]] = 0            #stopping bot_2
-    #                     self.v_y_output[pair[1]] = 0
-    #                     self.w_output[pair[1]] = 0
-    #                     self.cmd_vel_msg.poses[pair[1]].position.x= 0
-    #                     self.cmd_vel_msg.poses[pair[1]].position.y = 0
-    #                     self.cmd_vel_msg.poses[pair[1]].position.z= 0
-
+    
     def check_collision(self):
         bot_num = []             #an array of bot_num [0,1,2,3 ...]
-
+        time_limit = 4           #how much far ahead do we want to predict collision
+        threshold = 7           #threshold distance
         for i in range(self.n_agents):
             bot_num.append(i)
         pair_list = itertools.combinations(bot_num,2)  # all combination pairs [[0,1],[0,2],[0,3]....]
-
+    
         for pair in pair_list:
+            print("started outer loop")
+            for time in range(time_limit):
+                print("started inner loop")
+                x1 = self.current_pose[pair[0]][0] + self.v_x_output[pair[0]]*time
+                y1 = self.current_pose[pair[0]][1] + self.v_y_output[pair[0]]*time
+                x2 = self.current_pose[pair[1]][0] + self.v_x_output[pair[1]]*time
+                y2 = self.current_pose[pair[1]][1] + self.v_y_output[pair[1]]*time
+    
+                distance = sqrt((x1-x2)**2 + (y1-y2)**2)
+    
+                vx1 = self.v_x_output[pair[0]]
+                vy1 = self.v_y_output[pair[0]]
+                vx2 = self.v_x_output[pair[1]]
+                vy2 = self.v_y_output[pair[1]]
+    
+                v1 = sqrt((vx1)**2 + (vy1)**2)
+                v2 = sqrt((vx2)**2 + (vy2)**2)
+    
+                dot_prod = (vx2 - vx1)*(x1-x2) +  (vy2 - vy1)*(y1-y2)
+                print(pair,distance,threshold,time)
+    
+                if ( distance <= threshold ) and ( (v2 - v1)*dot_prod >0 ) and (v1 !=0 and v2 !=0):
+                    print("Predicted Collision between bot", pair[0], "and bot", pair[1], "distance:", distance, "in ", time ,"Seconds")
+    
+                    if( v1 - v2) > 0:    #implies v1> v2 and obtuse angle(dot_product <0) = collision = stop bot 1
+    
+                        self.v_x_output[pair[0]] = 0            #stopping bot_1
+                        self.v_y_output[pair[0]] = 0
+                        self.w_output[pair[0]] = 0
+                        self.cmd_vel_msg.poses[pair[0]].position.x= 0
+                        self.cmd_vel_msg.poses[pair[0]].position.y = 0
+                        self.cmd_vel_msg.poses[pair[0]].position.z= 0
+                        print("stopping bot",pair[0])
+    
+                    if( v2 - v1) > 0:   #implies v2>v1 and acute angle = stop bot 2
+    
+                        self.v_x_output[pair[1]] = 0            #stopping bot_2
+                        self.v_y_output[pair[1]] = 0
+                        self.w_output[pair[1]] = 0
+                        self.cmd_vel_msg.poses[pair[1]].position.x= 0
+                        self.cmd_vel_msg.poses[pair[1]].position.y = 0
+                        self.cmd_vel_msg.poses[pair[1]].position.z= 0
+                        print("stopping bot",pair[1])
 
-            x1 = self.current_pose[pair[0]][0]
-            y1 = self.current_pose[pair[0]][1]
-            gx1 = self.goal_pose[pair[0]][0]
-            gy1 = self.goal_pose[pair[0]][1]
+    # def check_collision(self):
+    #     bot_num = []             #an array of bot_num [0,1,2,3 ...]
 
-            x2 = self.current_pose[pair[1]][0]
-            y2 = self.current_pose[pair[1]][1]
-            gx2 = self.goal_pose[pair[1]][0]
-            gy2 = self.goal_pose[pair[1]][1]
+    #     for i in range(self.n_agents):
+    #         bot_num.append(i)
+    #     pair_list = itertools.combinations(bot_num,2)  # all combination pairs [[0,1],[0,2],[0,3]....]
 
-            vx1 = self.v_x_output[pair[0]]
-            vy1 = self.v_y_output[pair[0]]
-            vx2 = self.v_x_output[pair[1]]
-            vy2 = self.v_y_output[pair[1]]
+    #     for pair in pair_list:
 
-            v1 = sqrt((vx1)**2 + (vy1)**2)
-            v2 = sqrt((vx2)**2 + (vy2)**2)
+    #         x1 = self.current_pose[pair[0]][0]
+    #         y1 = self.current_pose[pair[0]][1]
+    #         gx1 = self.goal_pose[pair[0]][0]
+    #         gy1 = self.goal_pose[pair[0]][1]
 
-            dx1 = gx1-x1
-            dx2 = gx2-x2
-            dy1 = gy1-y1
-            dy2 = gy2-y2
+    #         x2 = self.current_pose[pair[1]][0]
+    #         y2 = self.current_pose[pair[1]][1]
+    #         gx2 = self.goal_pose[pair[1]][0]
+    #         gy2 = self.goal_pose[pair[1]][1]
 
-            r1 = dx1/dy1
-            r2 = dx2/dy2
+    #         vx1 = self.v_x_output[pair[0]]
+    #         vy1 = self.v_y_output[pair[0]]
+    #         vx2 = self.v_x_output[pair[1]]
+    #         vy2 = self.v_y_output[pair[1]]
 
-            y_c = (x2-x1+r1*y1-r2*y2)/(r1-r2)
-            x_c = x1 + ((y_c-y1)*r1)
+    #         v1 = sqrt((vx1)**2 + (vy1)**2)
+    #         v2 = sqrt((vx2)**2 + (vy2)**2)
 
-            d1 = sqrt((x1-x_c)**2 + (y1-y_c)**2)
-            d2 = sqrt((x2-x_c)**2 + (y2-y_c)**2)
+    #         dx1 = gx1-x1
+    #         dx2 = gx2-x2
+    #         dy1 = gy1-y1
+    #         dy2 = gy2-y2
 
-            if vx1==0 and vy1==0:
-                continue
+    #         r1 = dx1/dy1
+    #         r2 = dx2/dy2
 
-            if vx2==0 and vy2==0:
-                continue
+    #         y_c = (x2-x1+r1*y1-r2*y2)/(r1-r2)
+    #         x_c = x1 + ((y_c-y1)*r1)
 
-            if d1<=6 and d2<=6:
-                # if (vx1==0 and vx2==0) or (vy1==0 and vy2==0):
-                #     print(vx1,vx2,vy1,vy2)
-                #     print("maa chudao")
-                #     for i in bot_num:
-                #         self.v_x_output[i] = 0
-                #         self.v_y_output[i] = 0
-                #         self.w_output[i] = 0
-                #     collision_msg=Bool()
-                #     collision_msg.data=True
-                #     self.collision_pub.publish(collision_msg)
-                if d2>d1:
-                    print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
-                    self.v_x_output[pair[1]] = 0            #stopping bot_2
-                    self.v_y_output[pair[1]] = 0
-                    self.w_output[pair[1]] = 0
-                else:
-                    print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
-                    self.v_x_output[pair[0]] = 0            #stopping bot_2
-                    self.v_y_output[pair[0]] = 0
-                    self.w_output[pair[0]] = 0
+    #         d1 = sqrt((x1-x_c)**2 + (y1-y_c)**2)
+    #         d2 = sqrt((x2-x_c)**2 + (y2-y_c)**2)
 
-            # if((x_c-x1)*(gx1-x_c)>=0 and (y_c-y1)*(gy1-y_c)>=0 and (x_c-x2)*(gx2-x_c)>=0 and (y_c-y2)*(gy2-y_c)>=0):
+    #         if vx1==0 and vy1==0:
+    #             continue
 
-            #     t1 = sqrt((x1-gx1)**2 + (y1-gy1)**2)/(v1+0.001)
-            #     t2 = sqrt((x2-gx2)**2 + (y2-gy2)**2)/(v2+0.001)
+    #         if vx2==0 and vy2==0:
+    #             continue
 
-            #     if ( t1 < t2):
-            #         print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
-            #         self.collision_history += [[pair[0], pair[1], (x_c, y_c), (gx2, gy2)]]
-            #         self.v_x_output[pair[1]] = 0            #stopping bot_2
-            #         self.v_y_output[pair[1]] = 0
-            #         self.w_output[pair[1]] = 0
-            #         self.cmd_vel_msg.poses[pair[1]].position.x= 0
-            #         self.cmd_vel_msg.poses[pair[1]].position.y = 0
-            #         self.cmd_vel_msg.poses[pair[1]].position.z= 0
+    #         if d1<=6 and d2<=6:
+    #             # if (vx1==0 and vx2==0) or (vy1==0 and vy2==0):
+    #             #     print(vx1,vx2,vy1,vy2)
+    #             #     print("maa chudao")
+    #             #     for i in bot_num:
+    #             #         self.v_x_output[i] = 0
+    #             #         self.v_y_output[i] = 0
+    #             #         self.w_output[i] = 0
+    #             #     collision_msg=Bool()
+    #             #     collision_msg.data=True
+    #             #     self.collision_pub.publish(collision_msg)
+    #             if d2>d1:
+    #                 print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
+    #                 self.v_x_output[pair[1]] = 0            #stopping bot_2
+    #                 self.v_y_output[pair[1]] = 0
+    #                 self.w_output[pair[1]] = 0
+    #             else:
+    #                 print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
+    #                 self.v_x_output[pair[0]] = 0            #stopping bot_2
+    #                 self.v_y_output[pair[0]] = 0
+    #                 self.w_output[pair[0]] = 0
 
-            #     if ( t1 > t2):
-            #         print("Predicted Collision between bot", pair[0], "and bot", pair[1],  "in ", time ,"Seconds")
-            #         self.collision_history += [[pair[1], pair[0], (x_c, y_c), (gx1, gy1)]]
-            #         self.v_x_output[pair[0]] = 0            #stopping bot_1
-            #         self.v_y_output[pair[0]] = 0
-            #         self.w_output[pair[0]] = 0
-            #         self.cmd_vel_msg.poses[pair[0]].position.x= 0
-            #         self.cmd_vel_msg.poses[pair[0]].position.y = 0
-            #         self.cmd_vel_msg.poses[pair[0]].position.z= 0
+    #         # if((x_c-x1)*(gx1-x_c)>=0 and (y_c-y1)*(gy1-y_c)>=0 and (x_c-x2)*(gx2-x_c)>=0 and (y_c-y2)*(gy2-y_c)>=0):
+
+    #         #     t1 = sqrt((x1-gx1)**2 + (y1-gy1)**2)/(v1+0.001)
+    #         #     t2 = sqrt((x2-gx2)**2 + (y2-gy2)**2)/(v2+0.001)
+
+    #         #     if ( t1 < t2):
+    #         #         print("Predicted Collision between bot", pair[0], "and bot", pair[1], "in ", time ,"Seconds")
+    #         #         self.collision_history += [[pair[0], pair[1], (x_c, y_c), (gx2, gy2)]]
+    #         #         self.v_x_output[pair[1]] = 0            #stopping bot_2
+    #         #         self.v_y_output[pair[1]] = 0
+    #         #         self.w_output[pair[1]] = 0
+    #         #         self.cmd_vel_msg.poses[pair[1]].position.x= 0
+    #         #         self.cmd_vel_msg.poses[pair[1]].position.y = 0
+    #         #         self.cmd_vel_msg.poses[pair[1]].position.z= 0
+
+    #         #     if ( t1 > t2):
+    #         #         print("Predicted Collision between bot", pair[0], "and bot", pair[1],  "in ", time ,"Seconds")
+    #         #         self.collision_history += [[pair[1], pair[0], (x_c, y_c), (gx1, gy1)]]
+    #         #         self.v_x_output[pair[0]] = 0            #stopping bot_1
+    #         #         self.v_y_output[pair[0]] = 0
+    #         #         self.w_output[pair[0]] = 0
+    #         #         self.cmd_vel_msg.poses[pair[0]].position.x= 0
+    #         #         self.cmd_vel_msg.poses[pair[0]].position.y = 0
+    #         #         self.cmd_vel_msg.poses[pair[0]].position.z= 0
 
 
     def twist_msg(self):
