@@ -58,6 +58,12 @@ class pose_publisher:
         return a
 
     def change_pose(self,bot,x,y,yaw):
+        #y=y-y_change
+        y=y*6.0/29.0 #factor
+        x=x*6.0/29.0 #factor
+        y_exp=24.85-0.0195*x
+        y_chg=y_exp-21
+        y=y-y_chg
         if(y!=0):
             self.current_pose[bot][1]=y
         if(x!=0):
@@ -78,7 +84,7 @@ class pose_publisher:
 
     def callback_opencv(self):
         while True:
-            vid = cv2.VideoCapture(2)
+            vid = cv2.VideoCapture(-1)
             if vid.isOpened():
                 print("hii")
             ret, img = vid.read()
@@ -89,6 +95,8 @@ class pose_publisher:
         while not rospy.is_shutdown():
             ret,img=vid.read()
             ret1,img1=vid.read()
+            img=img[25:438,52:505]
+            img1=img1[25:438,52:505]
             arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_7X7_50)
             arucoParams = cv2.aruco.DetectorParameters_create()
 
@@ -99,7 +107,7 @@ class pose_publisher:
             (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
             print(ids)
             for i in range(self.n_agents):            
-                a=np.where(ids==40)
+                a=np.where(ids==i+1)
                 if a[0].size==1:
                     print(i)
                     (topLeft, topRight, bottomRight, bottomLeft) = corners[a[0][0]][0]
@@ -111,9 +119,10 @@ class pose_publisher:
                     cX = int((topLeft[0] + bottomRight[0]) / 2.0)
                     cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                     # print(bottomRight,bottomLeft,topRight,topLeft)
-                    print(cX,cY)
+                    # print(cY,cX)
                     # img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)            
-                    self.change_pose(i,cX/resize_,cY/resize_,self.angle((bottomRight[1]-bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
+                    self.change_pose(i,cY/resize_,cX/resize_,-1*self.angle((bottomRight[1]-bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
+                    print(self.current_pose[i])
                     # img1=cv2.circle(img1,(int(self.current_pose[i][0]),int(self.current_pose[i][1])),10,(250-i*int(200/self.n_agents),10+i*int(200/self.n_agents),30+i*int(200/self.n_agents)),-1)
             
             cv2.imshow('original_image', img)

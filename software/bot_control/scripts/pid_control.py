@@ -11,38 +11,39 @@ from time import sleep
 
 class PID:
     def __init__(self):
-        self.n_agents=6
+        self.n_agents=1
         self.control_rate=rospy.Rate(10)
 
+        self.scaling_factor=50
         # defining tunable params
-        self.kp_lin_x= 1.0
-        self.kd_lin_x= 1.0/10.0
-        self.ki_lin_x= 1.0/2.0
+        self.kp_lin_x= 0.2
+        self.kd_lin_x= 0.4
+        self.ki_lin_x= 0
 
-        self.kp_soft_lin_x= 5.0
-        self.kd_soft_lin_x= 5.0/10.0
-        self.ki_soft_lin_x= 5.0/2.0
+        self.kp_soft_lin_x= 0.5
+        self.kd_soft_lin_x= 0.8
+        self.ki_soft_lin_x= 0
 
-        self.kp_lin_y= 1.0
-        self.kd_lin_y= 1.0/10.0
-        self.ki_lin_y= 1.0/2.0
+        self.kp_lin_y= 0.2
+        self.kd_lin_y= 0.4
+        self.ki_lin_y= 0
 
-        self.kp_soft_lin_y= 5.0
-        self.kd_soft_lin_y= 5.0/10.0
-        self.ki_soft_lin_y= 5.0/2.0
+        self.kp_soft_lin_y= 0.5
+        self.kd_soft_lin_y= 0.8
+        self.ki_soft_lin_y= 0
 
-        self.kp_angle= 1.0
-        self.kd_angle= 1.0/10.0
-        self.ki_angle= 1.0/2.0
+        self.kp_angle= 10.6
+        self.kd_angle= 1.55
+        self.ki_angle= 1.19
 
-        self.kp_soft_angle= 1.0/5
-        self.kd_soft_angle= 1.0/50.0
-        self.ki_soft_angle= 1.0/10.0
+        # self.kp_soft_angle= 120.0/20.0
+        # self.kd_soft_angle= 0
+        # self.ki_soft_angle= 0
 
-        self.max_vel_lin= 4.0
-        self.max_vel_ang= 0.4
+        self.max_vel_lin= 3.0
+        self.max_vel_ang= 35
 
-        self.intergral_windup_yaw=20.0
+        self.intergral_windup_yaw=3.0
         self.intergral_windup_lin_x=15.0
         self.intergral_windup_lin_y=15.0
 
@@ -52,8 +53,8 @@ class PID:
         self.lin_y_threshold = 0.5
         self.lin_y_smalldiff = 2
 
-        self.angle_threshold = 0.1
-        self.angle_smalldiff = 0.3
+        self.angle_threshold = 0.25
+        # self.angle_smalldiff = 0.3
 
         self.halt_unit=10  #1 count is one time step which is 1/frequncy (control rate)
         # error varibales
@@ -76,9 +77,9 @@ class PID:
         self.need_new_plan = np.zeros(self.n_agents) +1 #in PID sense of a new plan is a next waypoint
 
         # bot specs (see daig in documentation)
-        self.l1=0.07
-        self.l2=0.07
-        self.l3=0.07
+        self.l1=0.048
+        self.l2=0.054
+        self.l3=0.054
 
         # publishers
         self.control_input_pub = rospy.Publisher('/cmd_vel', PoseArray, queue_size=10)
@@ -157,6 +158,7 @@ class PID:
         print(self.goal_pose)
 
     def twist_msg(self):
+
         for i in range(self.n_agents):
             if abs(self.v_x_output[i])>self.max_vel_lin :
                 self.cmd_vel_msg.poses[i].position.x = self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]
@@ -188,9 +190,10 @@ class PID:
             inverse_kinematics_transform=np.array([[sin(a),-cos(a),-self.l1],[cos(pi/4+a),sin(pi/4+a),-self.l2],[-cos(pi/4-a),sin(pi/4-a),-self.l3]])
             req_vel=np.array([[self.v_x_output[i]],[self.v_y_output[i]],[self.w_output[i]]])
             wheel_speed=np.matmul(inverse_kinematics_transform,req_vel)
+            wheel_speed=wheel_speed*self.scaling_factor
             # print(wheel_speed)
             self.wheel_vel_msg.poses[i].position.x=wheel_speed[0][0]
-            self.wheel_vel_msg.poses[i].position.y=wheel_speed[1][0]
+            self.wheel_vel_msg.poses[i].position.y=wheel_speed[1][0]  
             self.wheel_vel_msg.poses[i].position.z=wheel_speed[2][0]
 
     def resetValues(self,i):
@@ -219,7 +222,8 @@ class PID:
                     #PID along x
                     if(abs(distance_x)>=abs(distance_y)):
                         if (abs(distance_y) > self.lin_y_smalldiff): #moving in x only after in line of motion
-                            self.v_y_output[i] = self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
+                            print("correcting only y")
+                            self.v_y_output[i] = 0.5+ self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
                             self.lastError_dist_y[i]= distance_y
                             if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
                                 self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
@@ -230,23 +234,23 @@ class PID:
                             if abs(distance_y)<self.lin_y_threshold :
                                 self.v_y_output[i]=0
                             else :
-                                self.v_y_output[i] = self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
+                                self.v_y_output[i] = 0.5 + self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
                                 self.lastError_dist_y[i]= distance_y
                                 if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
                                     self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
 
                             #PID along x
-                            if (abs(distance_x) > self.lin_x_smalldiff):
-                                self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
+                            if (abs(distance_x) > self.lin_x_threshold):
+                                self.v_x_output[i] = 0.5 + self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
                                 self.lastError_dist_x[i]= distance_x
                                 if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
                                     self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
-
-                            elif (abs(distance_x) <= self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
-                                self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
-                                self.lastError_dist_x[i]= distance_x
-                                if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
-                                    self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
+                                print(self.v_x_output[i])
+                            # elif (abs(distance_x) <= self.lin_x_smalldiff and abs(distance_x) > self.lin_x_threshold):
+                            #     self.v_x_output[i] = self.kp_soft_lin_x*(distance_x) + self.kd_soft_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_soft_lin_x*self.sumError_dist_x[i]
+                            #     self.lastError_dist_x[i]= distance_x
+                            #     if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
+                            #         self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
 
                             else:
                                 self.v_x_output[i]=0                                
@@ -269,32 +273,32 @@ class PID:
                                 if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
                                     self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
                             #PID along y
-                            if (abs(distance_y) > self.lin_y_smalldiff): #moving in x only after in line of motion
+                            if (abs(distance_y) > self.lin_y_threshold): #moving in x only after in line of motion
                                 self.v_y_output[i] = self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
                                 self.lastError_dist_y[i]= distance_y
                                 if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
                                     self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
-                            elif(abs(distance_y)>self.lin_y_threshold):
-                                self.v_y_output[i] = self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
-                                self.lastError_dist_y[i]= distance_y
-                                if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
-                                    self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
+                            # elif(abs(distance_y)>self.lin_y_threshold):
+                            #     self.v_y_output[i] = self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
+                            #     self.lastError_dist_y[i]= distance_y
+                            #     if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
+                            #         self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
                             else :
                                 self.v_y_output[i]=0
 
 
 
                     #PID angular
-                    if (abs(diff_yaw) > self.angle_smalldiff):
+                    if (abs(diff_yaw) > self.angle_threshold):
                         self.w_output[i]= self.kp_angle*(diff_yaw) + self.kd_angle*(diff_yaw-self.lastError_angle[i]) + self.ki_angle*(self.sumError_angle[i])
                         self.lastError_angle[i] = diff_yaw
                         if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
                             self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
-                    elif (abs(diff_yaw) <= self.angle_smalldiff and abs(diff_yaw)>self.angle_threshold):
-                        self.w_output[i]= self.kp_soft_angle*(diff_yaw) + self.kd_soft_angle*(diff_yaw-self.lastError_angle[i]) + self.ki_soft_angle*(self.sumError_angle[i])
-                        self.lastError_angle[i] = diff_yaw
-                        if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
-                            self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
+                    # elif (abs(diff_yaw) <= self.angle_smalldiff and abs(diff_yaw)>self.angle_threshold):
+                    #     self.w_output[i]= self.kp_soft_angle*(diff_yaw) + self.kd_soft_angle*(diff_yaw-self.lastError_angle[i]) + self.ki_soft_angle*(self.sumError_angle[i])
+                    #     self.lastError_angle[i] = diff_yaw
+                    #     if(abs(self.sumError_angle[i]+diff_yaw)<self.intergral_windup_yaw):
+                    #         self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
                     else:
                         self.w_output[i]=0
 
