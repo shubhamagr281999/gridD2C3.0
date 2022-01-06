@@ -11,7 +11,7 @@ from math import ceil,pi
 class goal_publisher:
     def __init__(self):
         # self.rate=rospy.Rate(0.5)
-        self.n_agents=6
+        self.n_agents=4
         self.goal_pose=np.zeros([self.n_agents,3])
         self.turning_points=self.empty_list(self.n_agents)
         self.need_new_plan=np.zeros(self.n_agents)
@@ -70,7 +70,7 @@ class goal_publisher:
         return k
 
     def reverse_transform(self,pose):
-        return [84-6*pose[1]-3,pose[0]*6+3]
+        return [84-12*pose[1]-6,pose[0]*12]
 
     def transform(self,pose):
         x = pose[0]
@@ -88,7 +88,7 @@ class goal_publisher:
     def plan_callback(self,msg):
         print('heard from CBS')
         for i in msg.agent:
-            if(self.bot_status[int(i.bot_num)]==1 and self.bot_status[int(i.bot_num)]==2):
+            if(self.bot_status[int(i.bot_num)]<3):
                 continue
             xi=[]
             yi=[]
@@ -104,6 +104,8 @@ class goal_publisher:
     def turning_point(self,x,y,d,bot_num):
         turnpoints=[]
         # turnpoints.append(self.reverse_transform([x[0],y[0]]))
+        # if(self.bot_status[int(bot_num)]==3 and self.current_pose[bot_num][1]<=6):
+        #     turnpoints.append([self.current_pose[bot_num][0],self.current_pose[bot_num][1]+6]) #remove
         for i in range(1,len(x)-1):
 
         #     #print("hi")
@@ -126,6 +128,16 @@ class goal_publisher:
                 turnpoints.append([-100,2])
         if(len(x)>1):
             turnpoints.append(self.reverse_transform([x[-1],y[-1]]))
+            #add here logic for checking -100
+            count = 0
+            index = 0
+            if(self.bot_status[int(bot_num)]==3 and self.current_pose[bot_num][1]<=6):
+                for arr in turnpoints:
+                    if(arr[0] == -100):
+                        index += 1
+                    else:
+                        break
+                turnpoints.insert(index, [self.current_pose[bot_num][0],self.current_pose[bot_num][1]+6])
             self.turning_points[bot_num]=turnpoints
             self.goal(bot_num)
         # print(self.turning_points)

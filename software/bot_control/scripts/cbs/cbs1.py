@@ -11,7 +11,7 @@ from itertools import combinations
 from copy import deepcopy
 from bot_control.msg import StartGoal, CompletePlan, PathArray
 from geometry_msgs.msg import Point
-from cbs.a_star import AStar
+from a_star import AStar
 
 import numpy as np
 

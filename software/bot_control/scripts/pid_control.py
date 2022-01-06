@@ -11,24 +11,24 @@ from time import sleep
 
 class PID:
     def __init__(self):
-        self.n_agents=1
+        self.n_agents=4
         self.control_rate=rospy.Rate(10)
 
         self.scaling_factor=50
         # defining tunable params
-        self.kp_lin_x= 0.2
-        self.kd_lin_x= 0.4
+        self.kp_lin_x= 100
+        self.kd_lin_x= 0
         self.ki_lin_x= 0
 
-        self.kp_soft_lin_x= 0.5
+        self.kp_soft_lin_x= 100
         self.kd_soft_lin_x= 0.8
         self.ki_soft_lin_x= 0
 
-        self.kp_lin_y= 0.2
+        self.kp_lin_y= 100
         self.kd_lin_y= 0.4
         self.ki_lin_y= 0
 
-        self.kp_soft_lin_y= 0.5
+        self.kp_soft_lin_y= 100
         self.kd_soft_lin_y= 0.8
         self.ki_soft_lin_y= 0
 
@@ -40,8 +40,8 @@ class PID:
         # self.kd_soft_angle= 0
         # self.ki_soft_angle= 0
 
-        self.max_vel_lin= 3.0
-        self.max_vel_ang= 35
+        self.max_vel_lin= 2.0
+        self.max_vel_ang= 2.0
 
         self.intergral_windup_yaw=3.0
         self.intergral_windup_lin_x=15.0

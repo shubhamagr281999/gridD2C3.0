@@ -20,7 +20,7 @@ class pose_publisher:
 
         # subscriber
         # self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
-        # self.vid = cv2.VideoCapture(2)
+        self.vid = cv2.VideoCapture(3)
 
 
     def initialize_current_pose(self):
