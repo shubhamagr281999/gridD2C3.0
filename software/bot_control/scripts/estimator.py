@@ -128,6 +128,24 @@ class pose_publisher:
                     # print(bottomRight,bottomLeft,topRight,topLeft)
                     # print(cY,cX)
                     # img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)
+                    # Reading an image in default mode
+                    # text
+                    pkg_id = self.pkg_id.dest_id[i]
+                    # font
+                    font = cv2.FONT_HERSHEY_SIMPLEX
+                    # origin
+                    org = bottomLeft
+                    # fontScale
+                    fontScale = 1
+                    # Red color in BGR
+                    color = (0, 0, 255)
+                    # Line thickness of 2 px
+                    thickness = 2
+                    if pkg_id != -1:
+                    # Using cv2.putText() method
+                        img1 = cv2.putText(img1, pkg_id, org, font, fontScale,
+                                         color, thickness, cv2.LINE_AA, False)
+
                     self.change_pose(i,cY/resize_,cX/resize_,-1*self.angle((bottomRight[1]-bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
                     print(self.current_pose[i])
                     # img1=cv2.circle(img1,(int(self.current_pose[i][0]),int(self.current_pose[i][1])),10,(250-i*int(200/self.n_agents),10+i*int(200/self.n_agents),30+i*int(200/self.n_agents)),-1)
