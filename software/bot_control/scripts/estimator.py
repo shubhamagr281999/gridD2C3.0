@@ -5,6 +5,7 @@ import cv2
 from math import sqrt, atan, pi, ceil
 import numpy as np
 from geometry_msgs.msg import Pose, PoseArray
+from bot_control.msg import pkg_id
 
 class pose_publisher:
     def __init__(self):
@@ -12,6 +13,7 @@ class pose_publisher:
         self.current_pose=np.zeros([self.n_agents,3])
         self.initialize_current_pose()
         self.control_rate=rospy.Rate(20)
+        self.pkg_id = pkg_id()
 
         #publisher
         self.pub_poses=rospy.Publisher('/poses',PoseArray,queue_size=1)
@@ -20,6 +22,7 @@ class pose_publisher:
 
         # subscriber
         # self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
+        self.pkg_id_sub=rospy.Subscriber('/pkg_dest_id',pkg_id,self.pkg_callback,queue_size=1)
         self.vid = cv2.VideoCapture(3)
 
 
@@ -27,7 +30,7 @@ class pose_publisher:
         for i in range(self.n_agents):
             if(i<int(ceil(self.n_agents/2.0))):
                 self.current_pose[i][0]=(4-i)*6+3
-                
+
                 if(i==0):
                     self.current_pose[i][1]=3
                     self.current_pose[i][2]=pi/2
@@ -36,7 +39,7 @@ class pose_publisher:
                     self.current_pose[i][2]=0
             else :
                 self.current_pose[i][0]=(9 + i - ceil(self.n_agents/2.0))*6 + 3
-                
+
                 if(i==ceil(self.n_agents/2.0)):
                     self.current_pose[i][1]=3
                     self.current_pose[i][2]=pi/2
@@ -49,7 +52,7 @@ class pose_publisher:
         for i in range(self.n_agents):
             temp_poses.append(Pose())
         self.poses.poses=temp_poses
-        
+
     def angle_bound(self,a):
         if(a<-pi):
             return 2*pi +a
@@ -82,6 +85,10 @@ class pose_publisher:
         else:
             return atan(y/(x+0.00001))
 
+    def pkg_callback(self,msg):
+        self.pkg_id = msg
+
+
     def callback_opencv(self):
         while True:
             vid = cv2.VideoCapture(-1)
@@ -106,7 +113,7 @@ class pose_publisher:
             img=cv2.resize(img,(resize_*img.shape[1],resize_*img.shape[0]))
             (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
             print(ids)
-            for i in range(self.n_agents):            
+            for i in range(self.n_agents):
                 a=np.where(ids==i+1)
                 if a[0].size==1:
                     print(i)
@@ -120,14 +127,14 @@ class pose_publisher:
                     cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                     # print(bottomRight,bottomLeft,topRight,topLeft)
                     # print(cY,cX)
-                    # img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)            
+                    # img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)
                     self.change_pose(i,cY/resize_,cX/resize_,-1*self.angle((bottomRight[1]-bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
                     print(self.current_pose[i])
                     # img1=cv2.circle(img1,(int(self.current_pose[i][0]),int(self.current_pose[i][1])),10,(250-i*int(200/self.n_agents),10+i*int(200/self.n_agents),30+i*int(200/self.n_agents)),-1)
-            
+
             cv2.imshow('original_image', img)
             cv2.waitKey(1)
-        
+
 
             cv2.imshow('processed_image',img1)
             cv2.waitKey(1)
