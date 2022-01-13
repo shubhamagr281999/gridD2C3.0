@@ -60,6 +60,7 @@ add_message_files(
   Bot_status.msg
   Bot_task.msg
   pose_bot.msg
+  pkg_id.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -116,7 +117,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES drdo-exploration
 #  CATKIN_DEPENDS rospy
-  CATKIN_DEPENDS message_runtime 
+  CATKIN_DEPENDS message_runtime
 )
 
 ###########
