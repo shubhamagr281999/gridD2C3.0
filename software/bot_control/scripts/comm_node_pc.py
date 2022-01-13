@@ -19,11 +19,26 @@ class communication:
     def wheel_speed_callback(self,msg):
         for i in range(1): #change 1 to self.n_agents ****
             urlt = self.url+str(i)+"/" 
-            if (abs(msg.poses[i].position.x) <= 35) :
+            if(msg.poses[i].position.x>=0):
+                msg.poses[i].position.x += 35
+            else:
+                msg.poses[i].position.x -= 35
+
+            if(msg.poses[i].position.y>=0):
+                msg.poses[i].position.y += 35
+            else:
+                msg.poses[i].position.y -= 35
+
+            if(msg.poses[i].position.z>=0):
+                msg.poses[i].position.z += 35
+            else:
+                msg.poses[i].position.z -= 35
+
+            if (abs(msg.poses[i].position.x) <= 45) :
                 msg.poses[i].position.x = 0
-            if (abs(msg.poses[i].position.y) <= 35) :
+            if (abs(msg.poses[i].position.y) <= 45) :
                 msg.poses[i].position.y = 0
-            if (abs(msg.poses[i].position.z) <= 35) :
+            if (abs(msg.poses[i].position.z) <= 45) :
                 msg.poses[i].position.z = 0
             self.pub_string = str(msg.poses[i].position.x * self.scaling_factor) + "," + str(msg.poses[i].position.y * self.scaling_factor) + "," + str(msg.poses[i].position.z * self.scaling_factor) + "0"
             requests.post(urlt, data= self.pub_string)

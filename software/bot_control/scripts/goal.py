@@ -11,7 +11,7 @@ from math import ceil,pi
 class goal_publisher:
     def __init__(self):
         # self.rate=rospy.Rate(0.5)
-        self.n_agents=4
+        self.n_agents=1
         self.goal_pose=np.zeros([self.n_agents,3])
         self.turning_points=self.empty_list(self.n_agents)
         self.need_new_plan=np.zeros(self.n_agents)
@@ -161,6 +161,7 @@ class goal_publisher:
         msg.y=self.goal_pose[bot_num][1]
         msg.yaw=yaw #100 is large impratical yaw just to indicate final yaw is not of significance
         msg.bot_num=bot_num
+        print(msg)
         self.pub_goal.publish(msg)
 
     def goal(self,bot_num):

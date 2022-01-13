@@ -45,7 +45,7 @@ class start_goal_publisher:
     def __init__(self):
 
         self.rate=rospy.Rate(10)
-        self.n_agents=4
+        self.n_agents=1
         
         self.lossfunction_para1= 0.01  #weighted loss function-LS selection  para1 for distance
         self.lossfunction_para2= 10 # para2 for queue size

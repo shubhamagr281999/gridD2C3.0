@@ -11,49 +11,49 @@ from time import sleep
 
 class PID:
     def __init__(self):
-        self.n_agents=4
+        self.n_agents=1
         self.control_rate=rospy.Rate(10)
 
         self.scaling_factor=50
         # defining tunable params
-        self.kp_lin_x= 100
-        self.kd_lin_x= 0
+        self.kp_lin_x= 0.2
+        self.kd_lin_x= 0.4
         self.ki_lin_x= 0
 
-        self.kp_soft_lin_x= 100
+        self.kp_soft_lin_x= 0.5
         self.kd_soft_lin_x= 0.8
         self.ki_soft_lin_x= 0
 
-        self.kp_lin_y= 100
+        self.kp_lin_y= 0.2
         self.kd_lin_y= 0.4
         self.ki_lin_y= 0
 
-        self.kp_soft_lin_y= 100
+        self.kp_soft_lin_y= 0.5
         self.kd_soft_lin_y= 0.8
         self.ki_soft_lin_y= 0
 
-        self.kp_angle= 10.6
-        self.kd_angle= 1.55
-        self.ki_angle= 1.19
+        self.kp_angle= 7
+        self.kd_angle= 1
+        self.ki_angle= 0
 
         # self.kp_soft_angle= 120.0/20.0
         # self.kd_soft_angle= 0
         # self.ki_soft_angle= 0
 
-        self.max_vel_lin= 2.0
-        self.max_vel_ang= 2.0
+        self.max_vel_lin= 3.0
+        self.max_vel_ang= 35
 
         self.intergral_windup_yaw=3.0
         self.intergral_windup_lin_x=15.0
         self.intergral_windup_lin_y=15.0
 
-        self.lin_x_threshold = 0.5
+        self.lin_x_threshold = 0.8
         self.lin_x_smalldiff = 2
 
-        self.lin_y_threshold = 0.5
+        self.lin_y_threshold = 0.8
         self.lin_y_smalldiff = 2
 
-        self.angle_threshold = 0.25
+        self.angle_threshold = 0.4
         # self.angle_smalldiff = 0.3
 
         self.halt_unit=10  #1 count is one time step which is 1/frequncy (control rate)
@@ -158,7 +158,6 @@ class PID:
         print(self.goal_pose)
 
     def twist_msg(self):
-
         for i in range(self.n_agents):
             if abs(self.v_x_output[i])>self.max_vel_lin :
                 self.cmd_vel_msg.poses[i].position.x = self.max_vel_lin*abs(self.v_x_output[i])/self.v_x_output[i]
@@ -223,7 +222,7 @@ class PID:
                     if(abs(distance_x)>=abs(distance_y)):
                         if (abs(distance_y) > self.lin_y_smalldiff): #moving in x only after in line of motion
                             print("correcting only y")
-                            self.v_y_output[i] = 0.5+ self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
+                            self.v_y_output[i] =  self.kp_lin_y*(distance_y) + self.kd_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_lin_y*self.sumError_dist_y[i]
                             self.lastError_dist_y[i]= distance_y
                             if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
                                 self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
@@ -234,14 +233,14 @@ class PID:
                             if abs(distance_y)<self.lin_y_threshold :
                                 self.v_y_output[i]=0
                             else :
-                                self.v_y_output[i] = 0.5 + self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
+                                self.v_y_output[i] =  self.kp_soft_lin_y*(distance_y) + self.kd_soft_lin_y*(distance_y-self.lastError_dist_y[i])+self.ki_soft_lin_y*self.sumError_dist_y[i]
                                 self.lastError_dist_y[i]= distance_y
                                 if(abs(self.sumError_dist_y[i] + distance_y)<self.intergral_windup_lin_y):
                                     self.sumError_dist_y[i] = self.sumError_dist_y[i] + distance_y
 
                             #PID along x
                             if (abs(distance_x) > self.lin_x_threshold):
-                                self.v_x_output[i] = 0.5 + self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
+                                self.v_x_output[i] = self.kp_lin_x*(distance_x) + self.kd_lin_x*(distance_x-self.lastError_dist_x[i])+self.ki_lin_x*self.sumError_dist_x[i]
                                 self.lastError_dist_x[i]= distance_x
                                 if(abs(self.sumError_dist_x[i] + distance_x)<self.intergral_windup_lin_x):
                                     self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
@@ -301,6 +300,7 @@ class PID:
                     #         self.sumError_angle[i]=self.sumError_angle[i]+diff_yaw
                     else:
                         self.w_output[i]=0
+                        # print('here')
 
                     # print(diff_yaw,distance_y,distance_x)
                     # might have to tweak in case of overshoot or very high time
@@ -310,6 +310,7 @@ class PID:
                         self.v_x_output[i]=0
                         self.v_y_output[i]=0
                         self.w_output[i]=0
+                        print("exiting")
 
 
                     # for halt we appned -100,-100 to goal_pose hence the below thing for the same
