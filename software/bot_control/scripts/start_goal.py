@@ -85,10 +85,10 @@ class start_goal_publisher:
         # print(self.last_zero_index(self.queue_LS_pseudo_actual[0]))
 
     def one_step_publish_(self,point,yaw,bot_num):
-        self.one_step_msg.bot_num=bot_num
-        self.one_step_msg.x=point[0]
-        self.one_step_msg.y=point[1]
-        self.one_step_msg.yaw=yaw
+        self.one_step_msg.bot_num=int(bot_num)
+        self.one_step_msg.x=float(point[0])
+        self.one_step_msg.y=float(point[1])
+        self.one_step_msg.yaw=float(yaw)
         # print('published')
         self.one_step_goal_pub.publish(self.one_step_msg)
 
@@ -154,7 +154,7 @@ class start_goal_publisher:
     def BotStatusPublish(self):
         msg=Bot_status()
         for i in range(self.n_agents):
-            msg.status.append(self.bot_status[i])
+            msg.status.append(int(self.bot_status[i]))
         self.bot_status_pub.publish(msg)
 
     def last_zero_index(self,array):
@@ -294,17 +294,18 @@ class start_goal_publisher:
         v=np.where(self.bot_status==2)[0]
 
         k=np.concatenate([z,p,f,e]).tolist()
+
         for i in k:
-            msg.bot_num.append(i)
+            msg.bot_num.append(int(i))
             # print('here')
             start_pose=self.transform(self.current_pose[i])
-            msg.start_x.append(start_pose[0])
-            msg.start_y.append(start_pose[1])
-            msg.start_d.append(start_pose[2])
+            msg.start_x.append(int(start_pose[0]))
+            msg.start_y.append(int(start_pose[1]))
+            msg.start_d.append(int(start_pose[2]))
             goal_pose=self.transform(self.assigned_dest_location[i])
-            msg.goal_x.append(goal_pose[0])
-            msg.goal_y.append(goal_pose[1])
-            msg.goal_d.append(goal_pose[2])
+            msg.goal_x.append(int(goal_pose[0]))
+            msg.goal_y.append(int(goal_pose[1]))
+            msg.goal_d.append(int(goal_pose[2]))
 
 
 
@@ -413,12 +414,14 @@ class start_goal_publisher:
                     self.one_step_publish_([-100,2],100,msg.data)
 
         elif(self.bot_status[msg.data]==2): #it was halting at LS for parcel and now it needs to go to destination
-            pkg_msg = pkg_id()
+            self.pkg_msg = pkg_id()
+            for i in range(self.n_agents):
+                self.pkg_msg.dest_id.append(-1)
             LS_=int(self.LS_assigned[msg.data])
             self.LS_assigned[msg.data]=-1
             dest_id=self.dest_assigner.assign(LS_)
-            pkg_msg.dest_id[msg.data] = dest_id
-            self.pkg_id_pub.publish(pkg_msg)
+            self.pkg_msg.dest_id[msg.data] = dest_id
+            self.pkg_id_pub.publish(self.pkg_msg)
             dest_block=self.preffered_dest_block(dest_id)
             if(dest_block==-1):
                 self.one_step_publish_([-100,5],100,msg.data)
@@ -441,9 +444,8 @@ class start_goal_publisher:
 
         elif(self.bot_status[msg.data]==4): #bot has aligend itself now need to drop parcel
             self.bot_status[msg.data]=5
-            pkg_msg = pkg_id()
-            pkg_msg.dest_id[msg.data] = -1
-            self.pkg_id_pub.publish(pkg_msg)
+            self.pkg_msg.dest_id[msg.data] = -1
+            self.pkg_id_pub.publish(self.pkg_msg)
             self.one_step_publish_([-100,5],100,msg.data)
             msg_flip=UInt8()
             msg_flip.data=msg.data

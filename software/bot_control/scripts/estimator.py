@@ -16,7 +16,6 @@ class pose_publisher:
         self.initialize_current_pose()
         self.control_rate=rospy.Rate(20)
         self.pkg_id = pkg_id()
-
         #publisher
         self.pub_poses=rospy.Publisher('/poses',PoseArray,queue_size=1)
         self.poses=PoseArray()
@@ -24,14 +23,8 @@ class pose_publisher:
 
         # subscriber
         self.pkg_id_sub=rospy.Subscriber('/pkg_dest_id',pkg_id,self.pkg_callback,queue_size=1)
-        # self.cmd_vel_sub=rospy.Subscriber('/image',Image,self.callback_opencv,queue_size=1)
-        while True:
-            self.vid = cv2.VideoCapture(0)
-            if self.vid.isOpened():
-                print("hii")
-            ret, img = self.vid.read()
-            if ret:
-                break     
+        # self.cmd_vel_sub=rospy.Subscriber('/cmd_vel',PoseArray,self.callback_opencv,queue_size=1)
+        # self.vid = cv2.VideoCapture(2)
 
 
     def initialize_current_pose(self):
@@ -97,8 +90,16 @@ class pose_publisher:
     def pkg_callback(self,msg):
         self.pkg_id = msg
 
+    def callback_opencv(self):
+        while True:
+            vid = cv2.VideoCapture(2)
+            if vid.isOpened():
+                print("hii")
+            ret, img = vid.read()
+            if ret:
+                print("finally camera is live")
+                break
 
-    def callback_opencv(self): 
         while not rospy.is_shutdown():
             ret,img=vid.read()
             ret1,img1=vid.read()
@@ -125,31 +126,33 @@ class pose_publisher:
                     cY = int((topLeft[1] + bottomRight[1]) / 2.0)
                     # print(bottomRight,bottomLeft,topRight,topLeft)
                     # print(cY,cX)
-                    # img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)
                     # Reading an image in default mode
                     # text
-                    pkg_id = self.pkg_id.dest_id[i]
-                    # font
-                    font = cv2.FONT_HERSHEY_SIMPLEX
-                    # origin
-                    org = bottomLeft #need to change
-                    # fontScale
-                    fontScale = 1
-                    # Red color in BGR
-                    color = (0, 0, 255)
-                    # Line thickness of 2 px
-                    thickness = 2
-                    if pkg_id != -1:
-                    # Using cv2.putText() method
-                        img1 = cv2.putText(img1, pkg_id, org, font, fontScale,
-                                         color, thickness, cv2.LINE_AA, False)
+                    if (len(self.pkg_id.dest_id) != 0 ):
+                        pkg_id_msg = self.pkg_id.dest_id[i]
+                        # font
+                        font = cv2.FONT_HERSHEY_SIMPLEX
+                        # origin
+                        org = (int(bottomLeft[0])/resize_, int(bottomLeft[1])/resize_) #resized
+                        # fontScale
+                        fontScale = 1
+                        # Red color in BGR
+                        color = (0, 0, 255)
+                        # Line thickness of 2 px
+                        thickness = 2
+                        if pkg_id_msg != -1:
+                        # Using cv2.putText() method
+                            img1 = cv2.putText(img1, pkg_id_msg, org, font, fontScale,
+                                             color, thickness, cv2.LINE_AA, False)
 
+                    # img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)
                     self.change_pose(i,cY/resize_,cX/resize_,-1*self.angle((bottomRight[1]-bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
                     print(self.current_pose[i])
                     # img1=cv2.circle(img1,(int(self.current_pose[i][0]),int(self.current_pose[i][1])),10,(250-i*int(200/self.n_agents),10+i*int(200/self.n_agents),30+i*int(200/self.n_agents)),-1)
 
             # cv2.imshow('original_image', img)
             # cv2.waitKey(1)
+
 
             cv2.imshow('processed_image',img1)
             cv2.waitKey(1)
@@ -163,12 +166,9 @@ class pose_publisher:
             self.control_rate.sleep()
 
 
-
 if __name__ == '__main__':
     rospy.init_node('pose_estimator')
     rospy.loginfo('reading from camera')
     pose_pub_obj=pose_publisher()
-
     pose_pub_obj.callback_opencv()
     rospy.spin()
-

@@ -42,7 +42,7 @@ class goal_publisher:
         for i in range(self.n_agents):
             if(i<int(ceil(self.n_agents/2.0))):
                 self.current_pose[i][0]=(4-i)*6+3
-                
+
                 if(i==0):
                     self.current_pose[i][1]=3
                     self.current_pose[i][2]=pi/2
@@ -51,7 +51,7 @@ class goal_publisher:
                     self.current_pose[i][2]=0
             else :
                 self.current_pose[i][0]=(9 + i - ceil(self.n_agents/2.0))*6 + 3
-                
+
                 if(i==ceil(self.n_agents/2.0)):
                     self.current_pose[i][1]=3
                     self.current_pose[i][2]=pi/2
@@ -118,11 +118,11 @@ class goal_publisher:
          #movement in y direction
             if x[i] == x[i+1] and y[i] != y[i+1]:
                 if x[i] != x[i-1] and y[i] == y[i-1]:
-                    turnpoints.append(self.reverse_transform([x[i],y[i]])) 
+                    turnpoints.append(self.reverse_transform([x[i],y[i]]))
             #movement in x direction
             elif x[i] != x[i+1] and y[i] == y[i+1]:
                 if x[i] == x[i-1] and y[i] != y[i-1]:
-                    turnpoints.append(self.reverse_transform([x[i],y[i]])) 
+                    turnpoints.append(self.reverse_transform([x[i],y[i]]))
             #Halt
             else:
                 turnpoints.append([-100,2])
@@ -146,7 +146,7 @@ class goal_publisher:
 
     def flag_pid_callback(self,msg):
         self.need_new_plan[msg.data]=1
-        self.goal(msg.data)        
+        self.goal(msg.data)    
 
     def one_step_callback(self,msg):
         self.turning_points[msg.bot_num]=[[msg.x,msg.y]]
@@ -167,7 +167,7 @@ class goal_publisher:
     def goal(self,bot_num):
         if(len(self.turning_points[bot_num])>0):
             if(bot_num==3):
-                print(self.turning_points[3]) 
+                print(self.turning_points[3])
             self.goal_pose[bot_num][0]=self.turning_points[bot_num][0][0]
             self.goal_pose[bot_num][1]=self.turning_points[bot_num][0][1]
             self.turning_points[bot_num].pop(0)
@@ -175,7 +175,7 @@ class goal_publisher:
 
             self.goal_pub(bot_num,self.yaw[bot_num])
             # print('new waypoint sent for bot ',bot_num)
-            
+
         else:
             pub_msgs=UInt8()
             pub_msgs.data=bot_num
