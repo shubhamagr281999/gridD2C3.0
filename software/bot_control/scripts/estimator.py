@@ -105,10 +105,20 @@ class pose_publisher:
             ret1,img1=vid.read()
             arucoDict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_ARUCO_ORIGINAL)
             arucoParams = cv2.aruco.DetectorParameters_create()
+            # arucoParams .cornerRefinementMaxIterations = 80
+            # arucoParams .cornerRefinementMethod = 1
+            # arucoParams .polygonalApproxAccuracyRate = 0.05
+            # arucoParams .cornerRefinementWinSize = 20
+            # arucoParams .cornerRefinementMinAccuracy = 0.05
+            # arucoParams .perspectiveRemovePixelPerCell = 8
+            # arucoParams .maxErroneousBitsInBorderRate = 0.04
+            # arucoParams .errorCorrectionRate = 0.2
+            # arucoParams .adaptiveThreshWinSizeStep= 3
+            # arucoParams .adaptiveThreshWinSizeMax= 23
 
             #now starting to localise bot wrt to the ids
             # resize tranformed image to 4 time orginal size
-            resize_=5
+            resize_=6
             img=cv2.resize(img,(resize_*img.shape[1],resize_*img.shape[0]))
             (corners, ids, rejected) = cv2.aruco.detectMarkers(img, arucoDict,parameters=arucoParams)
             print(ids)
@@ -127,24 +137,23 @@ class pose_publisher:
                     # print(bottomRight,bottomLeft,topRight,topLeft)
                     # print(cY,cX)
                     # Reading an image in default mode
-                    # text
-                    if (len(self.pkg_id.dest_id) != 0 ):
-                        pkg_id_msg = self.pkg_id.dest_id[i]
-                        # font
-                        font = cv2.FONT_HERSHEY_SIMPLEX
-                        # origin
-                        org = (int(bottomLeft[0])/resize_, int(bottomLeft[1])/resize_) #resized
-                        # fontScale
-                        fontScale = 1
-                        # Red color in BGR
-                        color = (0, 0, 255)
-                        # Line thickness of 2 px
-                        thickness = 2
-                        if pkg_id_msg != -1:
-                        # Using cv2.putText() method
-                            img1 = cv2.putText(img1, pkg_id_msg, org, font, fontScale,
-                                             color, thickness, cv2.LINE_AA, False)
-
+                    # # text
+                    # if (len(self.pkg_id.dest_id) != 0 ):
+                    #     pkg_id_msg = self.pkg_id.dest_id[i]
+                    #     print("pkg is", pkg_id_msg)
+                    #     # font
+                    #     font = cv2.FONT_HERSHEY_SIMPLEX
+                    #     # origin
+                    #     org = (int(bottomLeft[0])/resize_, int(bottomLeft[1])/resize_) #resized
+                    #     # fontScale
+                    #     fontScale = 1
+                    #     # Red color in BGR
+                    #     color = (0, 0, 255)
+                    #     # Line thickness of 2 px
+                    #     thickness = 2
+                    #     if pkg_id_msg != -1:
+                    #     # Using cv2.putText() method
+                    #         img1 = cv2.putText(img1, pkg_id_msg, org, font, fontScale,color, thickness, cv2.LINE_AA, False)
                     # img=cv2.circle(img,(cX,cY),10,(250-i*10,10+i*15,30+i*20),-1)
                     self.change_pose(i,cY/resize_,cX/resize_,-1*self.angle((bottomRight[1]-bottomLeft[1]),(bottomRight[0]- bottomLeft[0])))
                     print(self.current_pose[i])

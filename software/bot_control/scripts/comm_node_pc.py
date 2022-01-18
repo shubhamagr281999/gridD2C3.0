@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 #start server assignment from 240-249 it is being done because the last digit of 24x will represent bot number
 
@@ -15,10 +15,10 @@ class communication:
         self.url='http://192.168.68.24'
         self.scaling_factor = 1
 
-       
+
     def wheel_speed_callback(self,msg):
         for i in range(1): #change 1 to self.n_agents ****
-            urlt = self.url+str(i)+"/" 
+            urlt = self.url+str(i)+"/"
             if(msg.poses[i].position.x>=0):
                 msg.poses[i].position.x += 35
             else:
@@ -45,7 +45,7 @@ class communication:
             print(self.pub_string)
 
     def flipper_callback(self,msg):
-        urlt = self.url+str(msg.data)+"/" 
+        urlt = self.url+str(msg.data)+"/"
         self.pub_string = "0,0,0,1"
         requests.post(urlt, data= self.pub_string)
         print(self.pub_string)

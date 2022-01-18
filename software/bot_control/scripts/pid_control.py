@@ -40,7 +40,7 @@ class PID:
         # self.kd_soft_angle= 0
         # self.ki_soft_angle= 0
 
-        self.max_vel_lin= 3.0
+        self.max_vel_lin= 1.0
         self.max_vel_ang= 35
 
         self.intergral_windup_yaw=3.0
@@ -192,7 +192,7 @@ class PID:
             wheel_speed=wheel_speed*self.scaling_factor
             # print(wheel_speed)
             self.wheel_vel_msg.poses[i].position.x=wheel_speed[0][0]
-            self.wheel_vel_msg.poses[i].position.y=wheel_speed[1][0]  
+            self.wheel_vel_msg.poses[i].position.y=wheel_speed[1][0]
             self.wheel_vel_msg.poses[i].position.z=wheel_speed[2][0]
 
     def resetValues(self,i):
@@ -252,7 +252,7 @@ class PID:
                             #         self.sumError_dist_x[i] = self.sumError_dist_x[i] + distance_x
 
                             else:
-                                self.v_x_output[i]=0                                
+                                self.v_x_output[i]=0
                     else:  #PID along y
 
                         if (abs(distance_x) > self.lin_x_smalldiff):
